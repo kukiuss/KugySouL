@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap } from 'lucide-react';
+import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiService } from '@/services/api';
 
@@ -335,6 +335,62 @@ Continue writing:`;
     }
   }, [currentProject, wordCount, projects]);
 
+  const exportNovel = () => {
+    if (!currentProject || !editorContent) return;
+    
+    const content = `${currentProject.title}\n\n${editorContent}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentProject.title}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const shareNovel = async () => {
+    if (!currentProject || !editorContent) return;
+    
+    const shareData = {
+      title: currentProject.title,
+      text: editorContent.slice(0, 200) + '...',
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        console.log('Share cancelled');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${currentProject.title}\n\n${editorContent}`);
+      alert('Novel content copied to clipboard!');
+    }
+  };
+
+  const deleteProject = (projectId: string) => {
+    if (confirm('Are you sure you want to delete this novel? This action cannot be undone.')) {
+      const updatedProjects = projects.filter(p => p.id !== projectId);
+      setProjects(updatedProjects);
+      localStorage.setItem('novel_projects', JSON.stringify(updatedProjects));
+      
+      // If deleting current project, switch to another or create new
+      if (currentProject?.id === projectId) {
+        if (updatedProjects.length > 0) {
+          setCurrentProject(updatedProjects[0]);
+          setEditorContent(updatedProjects[0].chapters[0]?.content || '');
+        } else {
+          setCurrentProject(null);
+          setEditorContent('');
+        }
+      }
+    }
+  };
+
   // Auto-save functionality
   useEffect(() => {
     const autoSaveInterval = setInterval(() => {
@@ -463,24 +519,40 @@ Continue writing:`;
                   <motion.div
                     key={project.id}
                     whileHover={{ scale: 1.02 }}
-                    className="bg-white/5 rounded-xl p-6 border border-white/10 cursor-pointer"
-                    onClick={() => {
-                      setCurrentProject(project);
-                      setIsWriting(true);
-                    }}
+                    className="bg-white/5 rounded-xl p-6 border border-white/10 relative group"
                   >
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen className="w-5 h-5 text-purple-400" />
-                      <span className="text-sm text-purple-300 font-medium">{project.genre}</span>
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setCurrentProject(project);
+                        setIsWriting(true);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-5 h-5 text-purple-400" />
+                        <span className="text-sm text-purple-300 font-medium">{project.genre}</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-white mb-2">{project.title}</h3>
+                      <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                        {project.description || 'No description yet...'}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-400">
+                        <span>{project.chapters.length} chapters</span>
+                        <span>{project.totalWords} words</span>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">{project.title}</h3>
-                    <p className="text-gray-300 text-sm mb-4 line-clamp-2">
-                      {project.description || 'No description yet...'}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                      <span>{project.chapters.length} chapters</span>
-                      <span>{project.totalWords} words</span>
-                    </div>
+                    
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                      }}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/40 p-2 rounded-lg"
+                      title="Delete Novel"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
                   </motion.div>
                 ))}
               </div>
@@ -599,11 +671,11 @@ Continue writing:`;
                   <Save className="w-4 h-4 mr-2" />
                   Save
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button onClick={exportNovel} size="sm" variant="ghost">
                   <Download className="w-4 h-4 mr-2" />
                   Export
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button onClick={shareNovel} size="sm" variant="ghost">
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
