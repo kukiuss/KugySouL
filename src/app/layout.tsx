@@ -10,20 +10,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "OpenHands AI - Powerful AI Assistant",
-  description: "OpenHands AI is a powerful agent that can execute code, browse the web, and interact with various tools. Perfect for developers, researchers, and automation.",
-  keywords: ["AI", "assistant", "code execution", "web browsing", "automation", "OpenHands"],
-  authors: [{ name: "OpenHands Team" }],
+  title: "KugySouL - Premium AI Assistant Platform",
+  description: "KugySouL is the ultimate premium AI platform that can execute code, browse the web, write novels, and automate complex tasks. Experience the future of AI assistance.",
+  keywords: ["AI", "assistant", "premium", "code execution", "web browsing", "automation", "novel writing", "KugySouL"],
+  authors: [{ name: "KugySouL Team" }],
   openGraph: {
-    title: "OpenHands AI - Powerful AI Assistant",
-    description: "OpenHands AI is a powerful agent that can execute code, browse the web, and interact with various tools.",
+    title: "KugySouL - Premium AI Assistant Platform",
+    description: "KugySouL is the ultimate premium AI platform that can execute code, browse the web, write novels, and automate complex tasks.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OpenHands AI - Powerful AI Assistant",
-    description: "OpenHands AI is a powerful agent that can execute code, browse the web, and interact with various tools.",
+    title: "KugySouL - Premium AI Assistant Platform",
+    description: "KugySouL is the ultimate premium AI platform that can execute code, browse the web, write novels, and automate complex tasks.",
   },
 };
 

@@ -96,7 +96,7 @@ export default function SettingsPage() {
                 Settings
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                Configure your OpenHands AI experience
+                Configure your KugySouL experience
               </p>
             </div>
           </div>
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                     <span>API Configuration</span>
                   </CardTitle>
                   <CardDescription>
-                    Configure the connection to OpenHands backend
+                    Configure the connection to KugySouL backend
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

@@ -25,7 +25,7 @@ const simpleVercelConfig = {
   "env": {
     "NEXT_PUBLIC_API_BASE_URL": "https://minatoz997-backend66.hf.space",
     "NEXT_PUBLIC_WS_URL": "wss://minatoz997-backend66.hf.space",
-    "NEXT_PUBLIC_APP_NAME": "OpenHands AI"
+    "NEXT_PUBLIC_APP_NAME": "KugySouL"
   }
 };
 
@@ -35,7 +35,7 @@ console.log('✅ Created simple vercel.json configuration');
 // Create .env.production for build
 const envProduction = `NEXT_PUBLIC_API_BASE_URL=https://minatoz997-backend66.hf.space
 NEXT_PUBLIC_WS_URL=wss://minatoz997-backend66.hf.space
-NEXT_PUBLIC_APP_NAME=OpenHands AI
+NEXT_PUBLIC_APP_NAME=KugySouL
 NODE_ENV=production`;
 
 fs.writeFileSync('.env.production', envProduction);
@@ -63,7 +63,7 @@ try {
   execSync('vercel --prod --yes', { stdio: 'inherit' });
   
   console.log('\n🎉 Deployment completed!');
-  console.log('🌐 Your OpenHands AI frontend should now be live!');
+  console.log('🌐 Your KugySouL frontend should now be live!');
 
 } catch (error) {
   console.error('❌ Deployment failed:', error.message);

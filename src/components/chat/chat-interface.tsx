@@ -201,7 +201,7 @@ export function ChatInterface() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              OpenHands AI Assistant
+              KugySouL AI Assistant
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Ready to help with code, web browsing, and more
@@ -224,7 +224,7 @@ export function ChatInterface() {
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome to OpenHands AI
+                Welcome to KugySouL
               </h2>
               <p className="text-gray-600 dark:text-gray-300 max-w-md">
                 I&apos;m your AI assistant that can execute code, browse the web, manage files, and help with various tasks. 
@@ -279,7 +279,7 @@ export function ChatInterface() {
                       <div className="flex items-center space-x-2">
                         <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                         <span className="text-sm text-gray-600 dark:text-gray-300">
-                          OpenHands is thinking...
+                          KugySouL is thinking...
                         </span>
                       </div>
                     </Card>
@@ -301,7 +301,7 @@ export function ChatInterface() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask OpenHands AI anything... (Press Enter to send, Shift+Enter for new line)"
+              placeholder="Ask KugySouL anything... (Press Enter to send, Shift+Enter for new line)"
               className="min-h-[60px] max-h-[200px] resize-none"
               disabled={isLoading}
             />

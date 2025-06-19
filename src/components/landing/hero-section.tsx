@@ -17,11 +17,13 @@ import {
 export function HeroSection() {
   return (
     <section className="hero-section">
-      {/* Animated Background */}
+      {/* Enhanced Animated Background */}
       <div className="absolute inset-0">
         <div className="floating-orb-1" />
         <div className="floating-orb-2" />
         <div className="floating-orb-3" />
+        <div className="floating-orb-4" />
+        <div className="floating-orb-5" />
         <div className="hero-overlay" />
       </div>
 
@@ -36,7 +38,7 @@ export function HeroSection() {
           >
             <div className="premium-badge">
               <Star className="w-6 h-6 text-yellow-400" />
-              <span className="text-white font-semibold text-lg">Premium AI Assistant Platform</span>
+              <span className="text-white font-semibold text-lg">Ultra Premium AI Platform</span>
               <Sparkles className="w-6 h-6 text-purple-400" />
             </div>
           </motion.div>
@@ -49,7 +51,7 @@ export function HeroSection() {
             className="text-6xl md:text-8xl lg:text-9xl font-black text-white mb-8 leading-tight"
           >
             <span className="gradient-text">
-              OpenHands AI
+              KugySouL
             </span>
             <br />
             <span className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-300 block mt-4">

@@ -10,7 +10,7 @@ const demoSteps = [
   {
     step: 1,
     title: "Ask a Question",
-    description: "Start by asking OpenHands AI to help with any task",
+    description: "Start by asking KugySouL to help with any task",
     code: "Create a Python function to calculate fibonacci numbers"
   },
   {
@@ -95,7 +95,7 @@ export function DemoSection() {
             viewport={{ once: true }}
             className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl"
           >
-            See OpenHands AI{' '}
+            See KugySouL{' '}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               In Action
             </span>
@@ -107,7 +107,7 @@ export function DemoSection() {
             viewport={{ once: true }}
             className="mt-4 text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
           >
-            Watch how OpenHands AI handles a typical coding request from start to finish
+            Watch how KugySouL handles a typical coding request from start to finish
           </motion.p>
         </div>
 

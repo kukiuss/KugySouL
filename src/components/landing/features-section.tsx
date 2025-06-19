@@ -97,7 +97,7 @@ export function FeaturesSection() {
             className="mt-4 text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
           >
             From simple code execution to complex automation workflows, 
-            OpenHands AI provides all the tools you need to get things done.
+            KugySouL provides all the tools you need to get things done.
           </motion.p>
         </div>
 

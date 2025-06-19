@@ -15,12 +15,12 @@ export function Footer() {
                 <Bot className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                OpenHands AI
+                KugySouL
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-md">
-              Powerful AI agent that can execute code, browse the web, and interact with various tools. 
-              Perfect for building AI-powered applications and automating complex tasks.
+              Ultra premium AI platform that revolutionizes how you work with artificial intelligence. 
+              Experience the future of AI assistance with KugySouL's cutting-edge technology.
             </p>
           </div>
 
@@ -84,9 +84,9 @@ export function Footer() {
         {/* Bottom section */}
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © 2025 OpenHands AI. Built with{' '}
+            © 2025 KugySouL. Built with{' '}
             <Heart className="inline h-4 w-4 text-red-500" />{' '}
-            using Next.js and OpenRouter API.
+            using Next.js and cutting-edge AI technology.
           </p>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <Link 
