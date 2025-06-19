@@ -109,6 +109,26 @@ export const apiService = {
     const response = await api.delete(url)
     return response.data
   },
+
+  // Chat with OpenRouter API
+  async sendChatMessage(data: {
+    message: string
+    conversation_id?: string
+    model?: string
+    api_key?: string
+    stream?: boolean
+    max_tokens?: number
+    temperature?: number
+  }): Promise<any> {
+    const response = await api.post('/chat/message', data)
+    return response.data
+  },
+
+  // Get chat service info
+  async getChatInfo(): Promise<any> {
+    const response = await api.get('/chat/')
+    return response.data
+  },
 }
 
 export default api
