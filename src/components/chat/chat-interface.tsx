@@ -94,7 +94,7 @@ export function ChatInterface() {
         const aiMessage: Message = {
           id: generateId(),
           role: 'assistant',
-          content: chatResponse.response || chatResponse.message || 'Sorry, I received an empty response.',
+          content: chatResponse.message || 'Sorry, I received an empty response.',
           timestamp: new Date(),
           type: 'text'
         }
