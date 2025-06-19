@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap } from 'lucide-react';
+import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiService } from '@/services/api';
 
@@ -44,6 +44,7 @@ export default function NovelWriter() {
   const [autoPilotInterval, setAutoPilotInterval] = useState<NodeJS.Timeout | null>(null);
   const [autoPilotSpeed, setAutoPilotSpeed] = useState(10); // seconds between generations
   const [selectedModel, setSelectedModel] = useState('google/gemini-2.0-flash-exp');
+  const [selectedLanguage, setSelectedLanguage] = useState('english');
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -81,7 +82,11 @@ export default function NovelWriter() {
   };
 
   const getPromptByMode = () => {
-    const basePrompt = `You are a professional ${selectedGenre} novel writing assistant. `;
+    const languageInstruction = selectedLanguage === 'indonesian' 
+      ? 'Write in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+      : 'Write in English language. ';
+    
+    const basePrompt = `You are a professional ${selectedGenre} novel writing assistant. ${languageInstruction}`;
     
     switch (writingMode) {
       case 'dialogue':
@@ -175,8 +180,12 @@ Write the story now:`;
     try {
       const lastParagraph = editorContent.split('\n\n').slice(-2).join('\n\n');
       
+      const languageInstruction = selectedLanguage === 'indonesian' 
+        ? 'Write in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+        : 'Write in English language. ';
+
       const response = await apiService.sendChatMessage({
-        message: `You are a ${selectedGenre} novel writing assistant. Continue this story naturally and seamlessly. Here's what the user has written so far:
+        message: `You are a ${selectedGenre} novel writing assistant. ${languageInstruction}Continue this story naturally and seamlessly. Here's what the user has written so far:
 
 "${lastParagraph}"
 
@@ -207,8 +216,12 @@ Continue writing:`,
     
     setIsGenerating(true);
     try {
+      const languageInstruction = selectedLanguage === 'indonesian' 
+        ? 'Respond in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+        : 'Respond in English language. ';
+
       const response = await apiService.sendChatMessage({
-        message: `You are a professional ${selectedGenre} writing coach. Analyze this text and provide helpful suggestions:
+        message: `You are a professional ${selectedGenre} writing coach. ${languageInstruction}Analyze this text and provide helpful suggestions:
 
 "${editorContent.slice(-500)}"
 
@@ -239,11 +252,15 @@ Keep suggestions constructive and actionable:`,
     
     setIsGenerating(true);
     try {
+      const languageInstruction = selectedLanguage === 'indonesian' 
+        ? 'Write in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+        : 'Write in English language. ';
+      
       let promptText = '';
       
       if (!editorContent.trim()) {
         // Start a new story
-        promptText = `You are an expert ${selectedGenre} novelist. Start writing a compelling ${selectedGenre} novel. Create an engaging opening that:
+        promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Start writing a compelling ${selectedGenre} novel. Create an engaging opening that:
 
 - Introduces the main character and setting
 - Establishes the tone and atmosphere
@@ -256,7 +273,7 @@ Begin the novel now:`;
       } else {
         // Continue the existing story
         const lastSection = editorContent.split('\n\n').slice(-3).join('\n\n');
-        promptText = `You are continuing this ${selectedGenre} novel. Here's what has been written so far:
+        promptText = `You are continuing this ${selectedGenre} novel. ${languageInstruction}Here's what has been written so far:
 
 "${lastSection}"
 
@@ -334,6 +351,62 @@ Continue writing:`;
       setLastSaved(new Date());
     }
   }, [currentProject, wordCount, projects]);
+
+  const exportNovel = () => {
+    if (!currentProject || !editorContent) return;
+    
+    const content = `${currentProject.title}\n\n${editorContent}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentProject.title}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const shareNovel = async () => {
+    if (!currentProject || !editorContent) return;
+    
+    const shareData = {
+      title: currentProject.title,
+      text: editorContent.slice(0, 200) + '...',
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        console.log('Share cancelled');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${currentProject.title}\n\n${editorContent}`);
+      alert('Novel content copied to clipboard!');
+    }
+  };
+
+  const deleteProject = (projectId: string) => {
+    if (confirm('Are you sure you want to delete this novel? This action cannot be undone.')) {
+      const updatedProjects = projects.filter(p => p.id !== projectId);
+      setProjects(updatedProjects);
+      localStorage.setItem('novel_projects', JSON.stringify(updatedProjects));
+      
+      // If deleting current project, switch to another or create new
+      if (currentProject?.id === projectId) {
+        if (updatedProjects.length > 0) {
+          setCurrentProject(updatedProjects[0]);
+          setEditorContent(updatedProjects[0].chapters[0]?.content || '');
+        } else {
+          setCurrentProject(null);
+          setEditorContent('');
+        }
+      }
+    }
+  };
 
   // Auto-save functionality
   useEffect(() => {
@@ -463,24 +536,40 @@ Continue writing:`;
                   <motion.div
                     key={project.id}
                     whileHover={{ scale: 1.02 }}
-                    className="bg-white/5 rounded-xl p-6 border border-white/10 cursor-pointer"
-                    onClick={() => {
-                      setCurrentProject(project);
-                      setIsWriting(true);
-                    }}
+                    className="bg-white/5 rounded-xl p-6 border border-white/10 relative group"
                   >
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen className="w-5 h-5 text-purple-400" />
-                      <span className="text-sm text-purple-300 font-medium">{project.genre}</span>
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setCurrentProject(project);
+                        setIsWriting(true);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-5 h-5 text-purple-400" />
+                        <span className="text-sm text-purple-300 font-medium">{project.genre}</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-white mb-2">{project.title}</h3>
+                      <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                        {project.description || 'No description yet...'}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-400">
+                        <span>{project.chapters.length} chapters</span>
+                        <span>{project.totalWords} words</span>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">{project.title}</h3>
-                    <p className="text-gray-300 text-sm mb-4 line-clamp-2">
-                      {project.description || 'No description yet...'}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                      <span>{project.chapters.length} chapters</span>
-                      <span>{project.totalWords} words</span>
-                    </div>
+                    
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                      }}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/40 p-2 rounded-lg"
+                      title="Delete Novel"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
                   </motion.div>
                 ))}
               </div>
@@ -599,11 +688,11 @@ Continue writing:`;
                   <Save className="w-4 h-4 mr-2" />
                   Save
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button onClick={exportNovel} size="sm" variant="ghost">
                   <Download className="w-4 h-4 mr-2" />
                   Export
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button onClick={shareNovel} size="sm" variant="ghost">
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
@@ -636,11 +725,14 @@ Continue writing:`;
                   <div className="flex items-center gap-2 mb-4">
                     <Brain className="w-5 h-5 text-purple-400" />
                     <h3 className="text-white font-semibold">AI Writing Assistant</h3>
-                    <div className="ml-auto">
+                    <div className="ml-auto flex gap-2">
                       <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
                         {selectedModel === 'google/gemini-2.0-flash-exp' ? '🔥 Gemini 2.0' :
                          selectedModel === 'anthropic/claude-3.5-sonnet' ? '🎯 Claude 3.5' :
                          selectedModel === 'openai/gpt-4o' ? '💡 GPT-4o' : '⚡ GPT-4o Mini'}
+                      </span>
+                      <span className="text-xs bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-2 py-1 rounded-full">
+                        {selectedLanguage === 'indonesian' ? '🇮🇩 ID' : '🇺🇸 EN'}
                       </span>
                     </div>
                   </div>
@@ -687,6 +779,23 @@ Continue writing:`;
                         {selectedModel === 'anthropic/claude-3.5-sonnet' && '🎯 Great for structured writing and analysis'}
                         {selectedModel === 'openai/gpt-4o' && '💡 Powerful general-purpose model'}
                         {selectedModel === 'openai/gpt-4o-mini' && '⚡ Fast and efficient for quick generation'}
+                      </p>
+                    </div>
+
+                    {/* Language Selection */}
+                    <div>
+                      <label className="text-gray-300 text-sm mb-2 block">Writing Language</label>
+                      <select
+                        value={selectedLanguage}
+                        onChange={(e) => setSelectedLanguage(e.target.value)}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white text-sm"
+                      >
+                        <option value="english">🇺🇸 English</option>
+                        <option value="indonesian">🇮🇩 Bahasa Indonesia</option>
+                      </select>
+                      <p className="text-gray-400 text-xs mt-1">
+                        {selectedLanguage === 'english' && '🌍 AI will write in English language'}
+                        {selectedLanguage === 'indonesian' && '🇮🇩 AI akan menulis dalam Bahasa Indonesia'}
                       </p>
                     </div>
 
