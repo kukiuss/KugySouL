@@ -32,6 +32,7 @@ export default function NovelWriter() {
   const [prompt, setPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [editorContent, setEditorContent] = useState('');
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -73,12 +74,24 @@ export default function NovelWriter() {
     
     setIsGenerating(true);
     try {
-      const response = await apiService.post('/api/conversations', {
-        message: `Write a creative novel chapter or story segment based on this prompt: ${prompt}. Make it engaging, descriptive, and around 500-800 words.`,
-        type: 'novel_generation'
+      // Use the same endpoint as chat but with novel-specific prompt
+      const response = await apiService.sendChatMessage({
+        message: `You are a creative novel writing assistant. Write a compelling novel chapter or story segment based on this prompt: "${prompt}". 
+
+Guidelines:
+- Make it engaging and descriptive
+- Around 500-800 words
+- Use vivid imagery and strong character development
+- Include dialogue if appropriate
+- Match the tone and style requested
+- Be creative and original
+
+Write the story content now:`,
+        temperature: 0.8, // Higher creativity for novel writing
+        max_tokens: 1000
       });
       
-      setGeneratedContent((response as { data?: { content?: string } })?.data?.content || 'AI generated content will appear here...');
+      setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
     } catch (error) {
       console.error('AI generation failed:', error);
       setGeneratedContent('Sorry, AI generation is currently unavailable. Please try again later.');
@@ -348,6 +361,8 @@ export default function NovelWriter() {
             {/* Text Editor */}
             <div className="flex-1 p-6">
               <textarea
+                value={editorContent}
+                onChange={(e) => setEditorContent(e.target.value)}
                 className="w-full h-full bg-transparent text-white text-lg leading-relaxed resize-none outline-none"
                 placeholder="Start writing your novel here... Let your imagination flow!"
                 style={{ fontFamily: 'Georgia, serif' }}
@@ -406,17 +421,33 @@ export default function NovelWriter() {
                         <div className="text-gray-300 text-sm leading-relaxed max-h-60 overflow-y-auto">
                           {generatedContent}
                         </div>
-                        <Button
-                          size="sm"
-                          className="mt-3 bg-green-500 hover:bg-green-600"
-                          onClick={() => {
-                            // Add to editor (simplified)
-                            setGeneratedContent('');
-                            setPrompt('');
-                          }}
-                        >
-                          Use This Content
-                        </Button>
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            className="bg-green-500 hover:bg-green-600"
+                            onClick={() => {
+                              // Add to editor
+                              setEditorContent(prev => prev + '\n\n' + generatedContent);
+                              setGeneratedContent('');
+                              setPrompt('');
+                            }}
+                          >
+                            Add to Editor
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10"
+                            onClick={() => {
+                              // Replace editor content
+                              setEditorContent(generatedContent);
+                              setGeneratedContent('');
+                              setPrompt('');
+                            }}
+                          >
+                            Replace All
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
