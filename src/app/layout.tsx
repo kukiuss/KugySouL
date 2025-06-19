@@ -11,19 +11,19 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "KugySouL - Premium AI Assistant Platform",
-  description: "KugySouL is the ultimate premium AI platform that can execute code, browse the web, write novels, and automate complex tasks. Experience the future of AI assistance.",
-  keywords: ["AI", "assistant", "premium", "code execution", "web browsing", "automation", "novel writing", "KugySouL"],
+  description: "KugySouL is an ultra-premium AI platform that can execute code, browse the web, write novels, and automate complex tasks. Perfect for developers, researchers, and creative professionals.",
+  keywords: ["AI", "assistant", "code execution", "web browsing", "automation", "novel writing", "KugySouL", "premium"],
   authors: [{ name: "KugySouL Team" }],
   openGraph: {
     title: "KugySouL - Premium AI Assistant Platform",
-    description: "KugySouL is the ultimate premium AI platform that can execute code, browse the web, write novels, and automate complex tasks.",
+    description: "KugySouL is an ultra-premium AI platform that can execute code, browse the web, write novels, and automate complex tasks.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     title: "KugySouL - Premium AI Assistant Platform",
-    description: "KugySouL is the ultimate premium AI platform that can execute code, browse the web, write novels, and automate complex tasks.",
+    description: "KugySouL is an ultra-premium AI platform that can execute code, browse the web, write novels, and automate complex tasks.",
   },
 };
 
