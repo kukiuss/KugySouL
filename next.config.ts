@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable static optimization
-  output: 'standalone',
+  // Remove standalone output for Vercel deployment
+  // output: 'standalone',
   
   // Security headers
   async headers() {
