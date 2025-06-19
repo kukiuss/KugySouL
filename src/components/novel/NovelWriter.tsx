@@ -43,6 +43,7 @@ export default function NovelWriter() {
   const [autoPilotMode, setAutoPilotMode] = useState(false);
   const [autoPilotInterval, setAutoPilotInterval] = useState<NodeJS.Timeout | null>(null);
   const [autoPilotSpeed, setAutoPilotSpeed] = useState(10); // seconds between generations
+  const [selectedModel, setSelectedModel] = useState('google/gemini-2.0-flash-exp');
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -153,6 +154,7 @@ Write the story now:`;
     try {
       const response = await apiService.sendChatMessage({
         message: getPromptByMode(),
+        model: selectedModel,
         temperature: 0.8, // Higher creativity for novel writing
         max_tokens: 1200
       });
@@ -186,6 +188,7 @@ Continue the story from where they left off. Write 2-3 paragraphs that:
 - Keep the same narrative voice
 
 Continue writing:`,
+        model: selectedModel,
         temperature: 0.7,
         max_tokens: 800
       });
@@ -217,6 +220,7 @@ Provide 3-4 specific suggestions for:
 - Writing style tips
 
 Keep suggestions constructive and actionable:`,
+        model: selectedModel,
         temperature: 0.6,
         max_tokens: 600
       });
@@ -269,6 +273,7 @@ Continue writing:`;
 
       const response = await apiService.sendChatMessage({
         message: promptText,
+        model: selectedModel,
         temperature: 0.8,
         max_tokens: 800
       });
@@ -631,6 +636,13 @@ Continue writing:`;
                   <div className="flex items-center gap-2 mb-4">
                     <Brain className="w-5 h-5 text-purple-400" />
                     <h3 className="text-white font-semibold">AI Writing Assistant</h3>
+                    <div className="ml-auto">
+                      <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
+                        {selectedModel === 'google/gemini-2.0-flash-exp' ? '🔥 Gemini 2.0' :
+                         selectedModel === 'anthropic/claude-3.5-sonnet' ? '🎯 Claude 3.5' :
+                         selectedModel === 'openai/gpt-4o' ? '💡 GPT-4o' : '⚡ GPT-4o Mini'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -654,6 +666,27 @@ Continue writing:`;
                           ? 'AI will help continue your writing' 
                           : 'Generate content from prompts'
                         }
+                      </p>
+                    </div>
+
+                    {/* AI Model Selection */}
+                    <div>
+                      <label className="text-gray-300 text-sm mb-2 block">AI Model</label>
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white text-sm"
+                      >
+                        <option value="google/gemini-2.0-flash-exp">🔥 Gemini 2.0 Flash (Recommended for Novels)</option>
+                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                        <option value="openai/gpt-4o">GPT-4o</option>
+                        <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                      </select>
+                      <p className="text-gray-400 text-xs mt-1">
+                        {selectedModel === 'google/gemini-2.0-flash-exp' && '🚀 Google\'s latest model - excellent for creative writing with 2M context window'}
+                        {selectedModel === 'anthropic/claude-3.5-sonnet' && '🎯 Great for structured writing and analysis'}
+                        {selectedModel === 'openai/gpt-4o' && '💡 Powerful general-purpose model'}
+                        {selectedModel === 'openai/gpt-4o-mini' && '⚡ Fast and efficient for quick generation'}
                       </p>
                     </div>
 
