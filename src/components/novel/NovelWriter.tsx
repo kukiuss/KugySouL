@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,17 @@ export default function NovelWriter() {
   const [prompt, setPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [editorContent, setEditorContent] = useState('');
+  type WritingMode = 'story' | 'dialogue' | 'description' | 'character' | 'plot';
+  const [writingMode, setWritingMode] = useState<WritingMode>('story');
+  const [selectedGenre, setSelectedGenre] = useState('fantasy');
+  const [wordCount, setWordCount] = useState(0);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [collaborativeMode, setCollaborativeMode] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState('');
+  const [autoPilotMode, setAutoPilotMode] = useState(false);
+  const [autoPilotInterval, setAutoPilotInterval] = useState<NodeJS.Timeout | null>(null);
+  const [autoPilotSpeed, setAutoPilotSpeed] = useState(10); // seconds between generations
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -68,17 +79,85 @@ export default function NovelWriter() {
     setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
   };
 
+  const getPromptByMode = () => {
+    const basePrompt = `You are a professional ${selectedGenre} novel writing assistant. `;
+    
+    switch (writingMode) {
+      case 'dialogue':
+        return basePrompt + `Write compelling dialogue based on this prompt: "${prompt}". 
+        
+Guidelines:
+- Create natural, character-driven conversations
+- Include dialogue tags and action beats
+- Show character personality through speech patterns
+- Make it emotionally engaging
+- 300-500 words of pure dialogue
+
+Write the dialogue now:`;
+
+      case 'description':
+        return basePrompt + `Write vivid, immersive descriptions based on this prompt: "${prompt}".
+        
+Guidelines:
+- Use all five senses in descriptions
+- Create atmospheric and mood-setting prose
+- Include specific, concrete details
+- Paint a clear picture in the reader's mind
+- 400-600 words of rich description
+
+Write the descriptive passage now:`;
+
+      case 'character':
+        return basePrompt + `Develop a compelling character based on this prompt: "${prompt}".
+        
+Guidelines:
+- Create a detailed character profile
+- Include physical appearance, personality, backstory
+- Add unique quirks, motivations, and flaws
+- Show character through actions and dialogue
+- 500-700 words of character development
+
+Write the character development now:`;
+
+      case 'plot':
+        return basePrompt + `Create an engaging plot outline based on this prompt: "${prompt}".
+        
+Guidelines:
+- Structure with beginning, middle, end
+- Include conflict, tension, and resolution
+- Add plot twists and character arcs
+- Create compelling story beats
+- 400-600 words of plot development
+
+Write the plot outline now:`;
+
+      default: // story
+        return basePrompt + `Write a compelling ${selectedGenre} story segment based on this prompt: "${prompt}".
+        
+Guidelines:
+- Make it engaging and immersive
+- Include vivid descriptions and dialogue
+- Strong character development
+- Appropriate pacing and tension
+- Match ${selectedGenre} genre conventions
+- 600-900 words
+
+Write the story now:`;
+    }
+  };
+
   const generateWithAI = async () => {
     if (!prompt.trim()) return;
     
     setIsGenerating(true);
     try {
-      const response = await apiService.post('/api/conversations', {
-        message: `Write a creative novel chapter or story segment based on this prompt: ${prompt}. Make it engaging, descriptive, and around 500-800 words.`,
-        type: 'novel_generation'
+      const response = await apiService.sendChatMessage({
+        message: getPromptByMode(),
+        temperature: 0.8, // Higher creativity for novel writing
+        max_tokens: 1200
       });
       
-      setGeneratedContent((response as { data?: { content?: string } })?.data?.content || 'AI generated content will appear here...');
+      setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
     } catch (error) {
       console.error('AI generation failed:', error);
       setGeneratedContent('Sorry, AI generation is currently unavailable. Please try again later.');
@@ -87,10 +166,194 @@ export default function NovelWriter() {
     }
   };
 
-  const saveProject = () => {
-    // Save to localStorage for now
-    localStorage.setItem('novel_projects', JSON.stringify(projects));
+  const continueWriting = async () => {
+    if (!editorContent.trim()) return;
+    
+    setIsGenerating(true);
+    try {
+      const lastParagraph = editorContent.split('\n\n').slice(-2).join('\n\n');
+      
+      const response = await apiService.sendChatMessage({
+        message: `You are a ${selectedGenre} novel writing assistant. Continue this story naturally and seamlessly. Here's what the user has written so far:
+
+"${lastParagraph}"
+
+Continue the story from where they left off. Write 2-3 paragraphs that:
+- Flow naturally from their writing
+- Match their writing style and tone
+- Advance the plot or develop characters
+- Maintain the ${selectedGenre} genre
+- Keep the same narrative voice
+
+Continue writing:`,
+        temperature: 0.7,
+        max_tokens: 800
+      });
+      
+      setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
+    } catch (error) {
+      console.error('AI continuation failed:', error);
+      setGeneratedContent('Sorry, AI continuation is currently unavailable. Please try again later.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
+
+  const getSuggestions = async () => {
+    if (!editorContent.trim()) return;
+    
+    setIsGenerating(true);
+    try {
+      const response = await apiService.sendChatMessage({
+        message: `You are a professional ${selectedGenre} writing coach. Analyze this text and provide helpful suggestions:
+
+"${editorContent.slice(-500)}"
+
+Provide 3-4 specific suggestions for:
+- Plot development ideas
+- Character development opportunities  
+- Dialogue improvements
+- Scene enhancement
+- Writing style tips
+
+Keep suggestions constructive and actionable:`,
+        temperature: 0.6,
+        max_tokens: 600
+      });
+      
+      setAiSuggestions(response.response || response.message || 'AI suggestions will appear here...');
+    } catch (error) {
+      console.error('AI suggestions failed:', error);
+      setAiSuggestions('Sorry, AI suggestions are currently unavailable. Please try again later.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const autoPilotWrite = async () => {
+    if (isGenerating) return;
+    
+    setIsGenerating(true);
+    try {
+      let promptText = '';
+      
+      if (!editorContent.trim()) {
+        // Start a new story
+        promptText = `You are an expert ${selectedGenre} novelist. Start writing a compelling ${selectedGenre} novel. Create an engaging opening that:
+
+- Introduces the main character and setting
+- Establishes the tone and atmosphere
+- Hooks the reader immediately
+- Sets up the central conflict or mystery
+- Uses vivid, immersive descriptions
+- Is approximately 300-500 words
+
+Begin the novel now:`;
+      } else {
+        // Continue the existing story
+        const lastSection = editorContent.split('\n\n').slice(-3).join('\n\n');
+        promptText = `You are continuing this ${selectedGenre} novel. Here's what has been written so far:
+
+"${lastSection}"
+
+Continue the story naturally and seamlessly. Write the next section that:
+- Flows perfectly from the previous text
+- Advances the plot meaningfully
+- Develops characters further
+- Maintains the established tone and style
+- Adds tension, conflict, or intrigue
+- Is approximately 300-500 words
+
+Continue writing:`;
+      }
+
+      const response = await apiService.sendChatMessage({
+        message: promptText,
+        temperature: 0.8,
+        max_tokens: 800
+      });
+      
+      const newContent = response.response || response.message || '';
+      if (newContent) {
+        setEditorContent(prev => prev ? prev + '\n\n' + newContent : newContent);
+      }
+    } catch (error) {
+      console.error('Auto-pilot writing failed:', error);
+      // Stop auto-pilot on error
+      stopAutoPilot();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const startAutoPilot = () => {
+    setAutoPilotMode(true);
+    
+    // Start immediately
+    autoPilotWrite();
+    
+    // Set up interval for continuous writing
+    const interval = setInterval(() => {
+      autoPilotWrite();
+    }, autoPilotSpeed * 1000);
+    
+    setAutoPilotInterval(interval);
+  };
+
+  const stopAutoPilot = () => {
+    setAutoPilotMode(false);
+    if (autoPilotInterval) {
+      clearInterval(autoPilotInterval);
+      setAutoPilotInterval(null);
+    }
+  };
+
+  const countWords = (text: string) => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  const saveProject = useCallback(() => {
+    if (currentProject) {
+      // Update current project with editor content
+      const updatedProject = {
+        ...currentProject,
+        totalWords: wordCount
+      };
+      
+      const updatedProjects = projects.map(p => 
+        p.id === currentProject.id ? updatedProject : p
+      );
+      
+      setProjects(updatedProjects);
+      localStorage.setItem('novel_projects', JSON.stringify(updatedProjects));
+      setLastSaved(new Date());
+    }
+  }, [currentProject, wordCount, projects]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      if (editorContent.trim() && currentProject) {
+        saveProject();
+      }
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearInterval(autoSaveInterval);
+  }, [editorContent, currentProject, projects, saveProject]);
+
+  // Update word count when editor content changes
+  useEffect(() => {
+    setWordCount(countWords(editorContent));
+  }, [editorContent]);
+
+  // Cleanup auto-pilot on unmount
+  useEffect(() => {
+    return () => {
+      if (autoPilotInterval) {
+        clearInterval(autoPilotInterval);
+      }
+    };
+  }, [autoPilotInterval]);
 
   useEffect(() => {
     // Load projects from localStorage
@@ -348,6 +611,8 @@ export default function NovelWriter() {
             {/* Text Editor */}
             <div className="flex-1 p-6">
               <textarea
+                value={editorContent}
+                onChange={(e) => setEditorContent(e.target.value)}
                 className="w-full h-full bg-transparent text-white text-lg leading-relaxed resize-none outline-none"
                 placeholder="Start writing your novel here... Let your imagination flow!"
                 style={{ fontFamily: 'Georgia, serif' }}
@@ -369,36 +634,228 @@ export default function NovelWriter() {
                   </div>
 
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-gray-300 text-sm mb-2 block">
-                        What do you want to write about?
-                      </label>
-                      <textarea
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm"
-                        rows={3}
-                        placeholder="Describe a scene, character, or plot point..."
-                      />
+                    {/* Collaborative Mode Toggle */}
+                    <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white text-sm font-medium">Collaborative Writing</span>
+                        <button
+                          onClick={() => setCollaborativeMode(!collaborativeMode)}
+                          className={`w-10 h-6 rounded-full transition-all ${
+                            collaborativeMode ? 'bg-purple-500' : 'bg-gray-600'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
+                            collaborativeMode ? 'translate-x-5' : 'translate-x-1'
+                          }`} />
+                        </button>
+                      </div>
+                      <p className="text-gray-400 text-xs">
+                        {collaborativeMode 
+                          ? 'AI will help continue your writing' 
+                          : 'Generate content from prompts'
+                        }
+                      </p>
                     </div>
 
-                    <Button
-                      onClick={generateWithAI}
-                      disabled={isGenerating || !prompt.trim()}
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Zap className="w-4 h-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Generate with AI
-                        </>
-                      )}
-                    </Button>
+                    {/* Genre Selection */}
+                    <div>
+                      <label className="text-gray-300 text-sm mb-2 block">Genre</label>
+                      <select
+                        value={selectedGenre}
+                        onChange={(e) => setSelectedGenre(e.target.value)}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white text-sm"
+                      >
+                        <option value="fantasy">Fantasy</option>
+                        <option value="sci-fi">Science Fiction</option>
+                        <option value="romance">Romance</option>
+                        <option value="mystery">Mystery</option>
+                        <option value="thriller">Thriller</option>
+                        <option value="horror">Horror</option>
+                        <option value="historical">Historical Fiction</option>
+                        <option value="contemporary">Contemporary</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="literary">Literary Fiction</option>
+                      </select>
+                    </div>
+
+                    {/* Writing Mode Selection */}
+                    <div>
+                      <label className="text-gray-300 text-sm mb-2 block">Writing Mode</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { mode: 'story', label: '📖 Story', desc: 'Full narrative' },
+                          { mode: 'dialogue', label: '💬 Dialogue', desc: 'Conversations' },
+                          { mode: 'description', label: '🎨 Description', desc: 'Vivid scenes' },
+                          { mode: 'character', label: '👤 Character', desc: 'Development' },
+                          { mode: 'plot', label: '📋 Plot', desc: 'Story outline' }
+                        ].map(({ mode, label, desc }) => (
+                          <button
+                            key={mode}
+                            onClick={() => setWritingMode(mode as WritingMode)}
+                            className={`p-2 rounded-lg text-xs border transition-all ${
+                              writingMode === mode
+                                ? 'bg-purple-500 border-purple-400 text-white'
+                                : 'bg-white/5 border-white/20 text-gray-300 hover:bg-white/10'
+                            }`}
+                          >
+                            <div className="font-medium">{label}</div>
+                            <div className="text-xs opacity-75">{desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {collaborativeMode ? (
+                      /* Collaborative Writing Mode */
+                      <div className="space-y-3">
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                          <h4 className="text-blue-300 font-medium mb-2">✍️ Collaborative Mode</h4>
+                          <p className="text-gray-300 text-xs">
+                            Start writing in the editor. AI will help continue your story or provide suggestions.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={continueWriting}
+                            disabled={isGenerating || !editorContent.trim()}
+                            className="bg-blue-500 hover:bg-blue-600 text-xs"
+                            size="sm"
+                          >
+                            {isGenerating ? (
+                              <Zap className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <Pen className="w-3 h-3 mr-1" />
+                            )}
+                            Continue Story
+                          </Button>
+                          
+                          <Button
+                            onClick={getSuggestions}
+                            disabled={isGenerating || !editorContent.trim()}
+                            className="bg-green-500 hover:bg-green-600 text-xs"
+                            size="sm"
+                          >
+                            {isGenerating ? (
+                              <Zap className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <Brain className="w-3 h-3 mr-1" />
+                            )}
+                            Get Suggestions
+                          </Button>
+                        </div>
+
+                        {/* Auto-Pilot Mode */}
+                        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-purple-300 font-medium">🤖 Auto-Pilot Mode</h4>
+                            <div className={`w-2 h-2 rounded-full ${autoPilotMode ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
+                          </div>
+                          <p className="text-gray-300 text-xs mb-3">
+                            AI writes the entire novel automatically. Just sit back and watch!
+                          </p>
+                          
+                          {!autoPilotMode ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <label className="text-gray-300 text-xs">Speed:</label>
+                                <select
+                                  value={autoPilotSpeed}
+                                  onChange={(e) => setAutoPilotSpeed(Number(e.target.value))}
+                                  className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white text-xs"
+                                >
+                                  <option value={5}>Fast (5s)</option>
+                                  <option value={10}>Normal (10s)</option>
+                                  <option value={15}>Slow (15s)</option>
+                                  <option value={30}>Very Slow (30s)</option>
+                                </select>
+                              </div>
+                              
+                              <Button
+                                onClick={startAutoPilot}
+                                disabled={isGenerating}
+                                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-xs"
+                                size="sm"
+                              >
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Start Auto-Pilot
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="text-center">
+                                <div className="text-green-300 text-xs font-medium mb-1">
+                                  🚀 Auto-Pilot Active
+                                </div>
+                                <div className="text-gray-400 text-xs">
+                                  Writing every {autoPilotSpeed} seconds...
+                                </div>
+                              </div>
+                              
+                              <Button
+                                onClick={stopAutoPilot}
+                                className="w-full bg-red-500 hover:bg-red-600 text-xs"
+                                size="sm"
+                              >
+                                ⏹️ Stop Auto-Pilot
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Word Count Display */}
+                        <div className="bg-white/5 rounded-lg p-2">
+                          <div className="text-gray-300 text-xs">
+                            <span className="font-medium">{wordCount}</span> words written
+                            {lastSaved && (
+                              <span className="ml-2 text-gray-400">
+                                • Saved {lastSaved.toLocaleTimeString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Prompt-based Generation Mode */
+                      <div>
+                        <div>
+                          <label className="text-gray-300 text-sm mb-2 block">
+                            What do you want to write about?
+                          </label>
+                          <textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm"
+                            rows={3}
+                            placeholder={
+                              writingMode === 'dialogue' ? 'Describe the conversation scene...' :
+                              writingMode === 'description' ? 'What scene or setting to describe...' :
+                              writingMode === 'character' ? 'Character name, role, or traits...' :
+                              writingMode === 'plot' ? 'Story concept or plot points...' :
+                              'Describe a scene, character, or plot point...'
+                            }
+                          />
+                        </div>
+
+                        <Button
+                          onClick={generateWithAI}
+                          disabled={isGenerating || !prompt.trim()}
+                          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Zap className="w-4 h-4 mr-2 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Generate with AI
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
 
                     {generatedContent && (
                       <div className="bg-white/5 rounded-lg p-4 border border-white/10">
@@ -406,16 +863,49 @@ export default function NovelWriter() {
                         <div className="text-gray-300 text-sm leading-relaxed max-h-60 overflow-y-auto">
                           {generatedContent}
                         </div>
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            className="bg-green-500 hover:bg-green-600"
+                            onClick={() => {
+                              // Add to editor
+                              setEditorContent(prev => prev + '\n\n' + generatedContent);
+                              setGeneratedContent('');
+                              setPrompt('');
+                            }}
+                          >
+                            Add to Editor
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10"
+                            onClick={() => {
+                              // Replace editor content
+                              setEditorContent(generatedContent);
+                              setGeneratedContent('');
+                              setPrompt('');
+                            }}
+                          >
+                            Replace All
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {aiSuggestions && (
+                      <div className="bg-green-500/5 rounded-lg p-4 border border-green-500/20">
+                        <h4 className="text-green-300 font-medium mb-2">💡 AI Writing Suggestions:</h4>
+                        <div className="text-gray-300 text-sm leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
+                          {aiSuggestions}
+                        </div>
                         <Button
                           size="sm"
-                          className="mt-3 bg-green-500 hover:bg-green-600"
-                          onClick={() => {
-                            // Add to editor (simplified)
-                            setGeneratedContent('');
-                            setPrompt('');
-                          }}
+                          variant="outline"
+                          className="mt-3 border-green-500/20 text-green-300 hover:bg-green-500/10"
+                          onClick={() => setAiSuggestions('')}
                         >
-                          Use This Content
+                          Clear Suggestions
                         </Button>
                       </div>
                     )}
