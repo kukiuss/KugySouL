@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,8 @@ export default function NovelWriter() {
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [editorContent, setEditorContent] = useState('');
-  const [writingMode, setWritingMode] = useState<'story' | 'dialogue' | 'description' | 'character' | 'plot'>('story');
+  type WritingMode = 'story' | 'dialogue' | 'description' | 'character' | 'plot';
+  const [writingMode, setWritingMode] = useState<WritingMode>('story');
   const [selectedGenre, setSelectedGenre] = useState('fantasy');
   const [wordCount, setWordCount] = useState(0);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -311,7 +312,7 @@ Continue writing:`;
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   };
 
-  const saveProject = () => {
+  const saveProject = useCallback(() => {
     if (currentProject) {
       // Update current project with editor content
       const updatedProject = {
@@ -327,7 +328,7 @@ Continue writing:`;
       localStorage.setItem('novel_projects', JSON.stringify(updatedProjects));
       setLastSaved(new Date());
     }
-  };
+  }, [currentProject, wordCount, projects]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -338,7 +339,7 @@ Continue writing:`;
     }, 30000); // Auto-save every 30 seconds
 
     return () => clearInterval(autoSaveInterval);
-  }, [editorContent, currentProject, projects]);
+  }, [editorContent, currentProject, projects, saveProject]);
 
   // Update word count when editor content changes
   useEffect(() => {
@@ -690,7 +691,7 @@ Continue writing:`;
                         ].map(({ mode, label, desc }) => (
                           <button
                             key={mode}
-                            onClick={() => setWritingMode(mode as any)}
+                            onClick={() => setWritingMode(mode as WritingMode)}
                             className={`p-2 rounded-lg text-xs border transition-all ${
                               writingMode === mode
                                 ? 'bg-purple-500 border-purple-400 text-white'
