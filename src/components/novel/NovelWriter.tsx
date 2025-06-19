@@ -44,6 +44,7 @@ export default function NovelWriter() {
   const [autoPilotInterval, setAutoPilotInterval] = useState<NodeJS.Timeout | null>(null);
   const [autoPilotSpeed, setAutoPilotSpeed] = useState(10); // seconds between generations
   const [selectedModel, setSelectedModel] = useState('google/gemini-2.0-flash-exp');
+  const [selectedLanguage, setSelectedLanguage] = useState('english');
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -81,7 +82,11 @@ export default function NovelWriter() {
   };
 
   const getPromptByMode = () => {
-    const basePrompt = `You are a professional ${selectedGenre} novel writing assistant. `;
+    const languageInstruction = selectedLanguage === 'indonesian' 
+      ? 'Write in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+      : 'Write in English language. ';
+    
+    const basePrompt = `You are a professional ${selectedGenre} novel writing assistant. ${languageInstruction}`;
     
     switch (writingMode) {
       case 'dialogue':
@@ -175,8 +180,12 @@ Write the story now:`;
     try {
       const lastParagraph = editorContent.split('\n\n').slice(-2).join('\n\n');
       
+      const languageInstruction = selectedLanguage === 'indonesian' 
+        ? 'Write in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+        : 'Write in English language. ';
+
       const response = await apiService.sendChatMessage({
-        message: `You are a ${selectedGenre} novel writing assistant. Continue this story naturally and seamlessly. Here's what the user has written so far:
+        message: `You are a ${selectedGenre} novel writing assistant. ${languageInstruction}Continue this story naturally and seamlessly. Here's what the user has written so far:
 
 "${lastParagraph}"
 
@@ -207,8 +216,12 @@ Continue writing:`,
     
     setIsGenerating(true);
     try {
+      const languageInstruction = selectedLanguage === 'indonesian' 
+        ? 'Respond in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+        : 'Respond in English language. ';
+
       const response = await apiService.sendChatMessage({
-        message: `You are a professional ${selectedGenre} writing coach. Analyze this text and provide helpful suggestions:
+        message: `You are a professional ${selectedGenre} writing coach. ${languageInstruction}Analyze this text and provide helpful suggestions:
 
 "${editorContent.slice(-500)}"
 
@@ -239,11 +252,15 @@ Keep suggestions constructive and actionable:`,
     
     setIsGenerating(true);
     try {
+      const languageInstruction = selectedLanguage === 'indonesian' 
+        ? 'Write in Indonesian language (Bahasa Indonesia). Use natural, fluent Indonesian with proper grammar and vocabulary. '
+        : 'Write in English language. ';
+      
       let promptText = '';
       
       if (!editorContent.trim()) {
         // Start a new story
-        promptText = `You are an expert ${selectedGenre} novelist. Start writing a compelling ${selectedGenre} novel. Create an engaging opening that:
+        promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Start writing a compelling ${selectedGenre} novel. Create an engaging opening that:
 
 - Introduces the main character and setting
 - Establishes the tone and atmosphere
@@ -256,7 +273,7 @@ Begin the novel now:`;
       } else {
         // Continue the existing story
         const lastSection = editorContent.split('\n\n').slice(-3).join('\n\n');
-        promptText = `You are continuing this ${selectedGenre} novel. Here's what has been written so far:
+        promptText = `You are continuing this ${selectedGenre} novel. ${languageInstruction}Here's what has been written so far:
 
 "${lastSection}"
 
@@ -708,11 +725,14 @@ Continue writing:`;
                   <div className="flex items-center gap-2 mb-4">
                     <Brain className="w-5 h-5 text-purple-400" />
                     <h3 className="text-white font-semibold">AI Writing Assistant</h3>
-                    <div className="ml-auto">
+                    <div className="ml-auto flex gap-2">
                       <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
                         {selectedModel === 'google/gemini-2.0-flash-exp' ? '🔥 Gemini 2.0' :
                          selectedModel === 'anthropic/claude-3.5-sonnet' ? '🎯 Claude 3.5' :
                          selectedModel === 'openai/gpt-4o' ? '💡 GPT-4o' : '⚡ GPT-4o Mini'}
+                      </span>
+                      <span className="text-xs bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-2 py-1 rounded-full">
+                        {selectedLanguage === 'indonesian' ? '🇮🇩 ID' : '🇺🇸 EN'}
                       </span>
                     </div>
                   </div>
@@ -759,6 +779,23 @@ Continue writing:`;
                         {selectedModel === 'anthropic/claude-3.5-sonnet' && '🎯 Great for structured writing and analysis'}
                         {selectedModel === 'openai/gpt-4o' && '💡 Powerful general-purpose model'}
                         {selectedModel === 'openai/gpt-4o-mini' && '⚡ Fast and efficient for quick generation'}
+                      </p>
+                    </div>
+
+                    {/* Language Selection */}
+                    <div>
+                      <label className="text-gray-300 text-sm mb-2 block">Writing Language</label>
+                      <select
+                        value={selectedLanguage}
+                        onChange={(e) => setSelectedLanguage(e.target.value)}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white text-sm"
+                      >
+                        <option value="english">🇺🇸 English</option>
+                        <option value="indonesian">🇮🇩 Bahasa Indonesia</option>
+                      </select>
+                      <p className="text-gray-400 text-xs mt-1">
+                        {selectedLanguage === 'english' && '🌍 AI will write in English language'}
+                        {selectedLanguage === 'indonesian' && '🇮🇩 AI akan menulis dalam Bahasa Indonesia'}
                       </p>
                     </div>
 
