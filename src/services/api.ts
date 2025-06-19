@@ -6,6 +6,23 @@ import type {
   CreateConversationResponse 
 } from '@/types'
 
+// Additional interfaces for chat functionality
+interface ChatResponse {
+  message: string
+  conversation_id?: string
+  model?: string
+  timestamp?: string
+  status?: string
+}
+
+interface ChatServiceInfo {
+  name: string
+  version: string
+  description: string
+  status: string
+  endpoints: Record<string, string>
+}
+
 const api = axios.create({
   baseURL: config.apiBaseUrl,
   timeout: 30000,
@@ -107,6 +124,26 @@ export const apiService = {
   // Generic DELETE request
   async delete<T>(url: string): Promise<T> {
     const response = await api.delete(url)
+    return response.data
+  },
+
+  // Chat with OpenRouter API
+  async sendChatMessage(data: {
+    message: string
+    conversation_id?: string
+    model?: string
+    api_key?: string
+    stream?: boolean
+    max_tokens?: number
+    temperature?: number
+  }): Promise<ChatResponse> {
+    const response = await api.post('/chat/message', data)
+    return response.data
+  },
+
+  // Get chat service info
+  async getChatInfo(): Promise<ChatServiceInfo> {
+    const response = await api.get('/chat/')
     return response.data
   },
 }
