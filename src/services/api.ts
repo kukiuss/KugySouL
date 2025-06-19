@@ -8,11 +8,17 @@ import type {
 
 // Additional interfaces for chat functionality
 interface ChatResponse {
-  message: string
+  response: string  // Backend returns "response", not "message"
+  message?: string  // Fallback for compatibility
   conversation_id?: string
   model?: string
   timestamp?: string
   status?: string
+  usage?: {
+    prompt_tokens: number
+    completion_tokens: number
+    total_tokens: number
+  }
 }
 
 interface ChatServiceInfo {
