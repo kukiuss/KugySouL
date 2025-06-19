@@ -61,7 +61,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
     @apply bg-background text-foreground;
@@ -237,10 +237,21 @@
   }
 
   .premium-card {
-    @apply glass-effect rounded-xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
     background: linear-gradient(135deg, 
       rgba(255, 255, 255, 0.1) 0%, 
       rgba(255, 255, 255, 0.05) 100%);
+  }
+  
+  .premium-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
 
   .dark .premium-card {
@@ -297,7 +308,12 @@
   }
   
   .premium-card {
-    @apply hover:scale-102;
+    transform: scale(1);
+    transition: transform 0.3s ease;
+  }
+  
+  .premium-card:hover {
+    transform: scale(1.02);
   }
 }
 
@@ -318,20 +334,36 @@
 
 /* Additional premium effects */
 .premium-input {
-  @apply glass-effect border-0 bg-transparent backdrop-blur-md transition-all duration-300;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-width: 0;
+  background-color: transparent;
+  backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
 }
 
 .premium-input:focus {
-  @apply ring-2 ring-primary/50 shadow-lg;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  outline: none;
+  ring: 2px solid hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .premium-nav {
-  @apply glass-effect border-b border-white/10;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .premium-footer {
-  @apply glass-effect border-t border-white/10;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Hero section specific styles */
@@ -342,11 +374,27 @@
 }
 
 .feature-icon {
-  @apply premium-gradient rounded-lg p-3 text-white shadow-lg;
+  background: linear-gradient(135deg, 
+    hsl(var(--primary)) 0%, 
+    hsl(var(--accent)) 50%, 
+    hsl(var(--primary)) 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .stats-card {
-  @apply premium-card text-center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  text-align: center;
   background: linear-gradient(135deg, 
     rgba(59, 130, 246, 0.1) 0%, 
     rgba(147, 51, 234, 0.1) 100%);
@@ -354,15 +402,38 @@
 
 /* Button variants */
 .btn-variant-gradient {
-  @apply premium-button;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .btn-variant-outline {
-  @apply border-2 border-primary/50 bg-transparent text-primary transition-all duration-300 hover:bg-primary hover:text-primary-foreground;
+  border: 2px solid hsl(var(--primary) / 0.5);
+  background-color: transparent;
+  color: hsl(var(--primary));
+  transition: all 0.3s ease;
+}
+
+.btn-variant-outline:hover {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 .btn-variant-ghost {
-  @apply bg-transparent text-muted-foreground transition-all duration-300 hover:bg-accent hover:text-accent-foreground;
+  background-color: transparent;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.3s ease;
+}
+
+.btn-variant-ghost:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
 }
 
 /* Loading animations */
@@ -377,7 +448,10 @@
 
 /* Premium focus styles */
 .premium-focus:focus {
-  @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
+  outline: none;
+  ring: 2px solid hsl(var(--primary) / 0.5);
+  ring-offset: 2px;
+  ring-offset-color: hsl(var(--background));
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
