@@ -728,6 +728,7 @@ Continue writing:`;
                     <div className="ml-auto flex gap-2">
                       <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
                         {selectedModel === 'google/gemini-2.0-flash-001' ? '🔥 Gemini 2.0' :
+                         selectedModel === 'deepseek/deepseek-r1:free' ? '🚀 DeepSeek R1' :
                          selectedModel === 'anthropic/claude-3.5-sonnet' ? '🎯 Claude 3.5' :
                          selectedModel === 'openai/gpt-4o' ? '💡 GPT-4o' : '⚡ GPT-4o Mini'}
                       </span>
@@ -770,12 +771,14 @@ Continue writing:`;
                         className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white text-sm"
                       >
                         <option value="google/gemini-2.0-flash-001">🔥 Gemini 2.0 Flash (Recommended for Novels)</option>
+                        <option value="deepseek/deepseek-r1:free">🚀 DeepSeek R1 (Free - 128K Context)</option>
                         <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
                         <option value="openai/gpt-4o">GPT-4o</option>
                         <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
                       </select>
                       <p className="text-gray-400 text-xs mt-1">
                         {selectedModel === 'google/gemini-2.0-flash-001' && '🚀 Google\'s latest model - excellent for creative writing with 2M context window'}
+                        {selectedModel === 'deepseek/deepseek-r1:free' && '🆓 FREE model with 128K context - perfect for long novels with reasoning capabilities'}
                         {selectedModel === 'anthropic/claude-3.5-sonnet' && '🎯 Great for structured writing and analysis'}
                         {selectedModel === 'openai/gpt-4o' && '💡 Powerful general-purpose model'}
                         {selectedModel === 'openai/gpt-4o-mini' && '⚡ Fast and efficient for quick generation'}
