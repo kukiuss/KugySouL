@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   // Remove standalone output for Vercel deployment
   // output: 'standalone',
   
+  // Allow dev origins for iframe compatibility
+  allowedDevOrigins: [
+    'work-1-leflzuxfjwqmzsht.prod-runtime.all-hands.dev',
+    'work-2-leflzuxfjwqmzsht.prod-runtime.all-hands.dev'
+  ],
+  
   // Security headers - Allow iframe for development
   async headers() {
     return [
