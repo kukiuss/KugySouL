@@ -97,7 +97,7 @@ Guidelines:
 - Include dialogue tags and action beats
 - Show character personality through speech patterns
 - Make it emotionally engaging
-- 300-500 words of pure dialogue
+- 800-1200 words of substantial dialogue with rich character interaction
 
 Write the dialogue now:`;
 
@@ -109,7 +109,7 @@ Guidelines:
 - Create atmospheric and mood-setting prose
 - Include specific, concrete details
 - Paint a clear picture in the reader's mind
-- 400-600 words of rich description
+- 800-1200 words of immersive, detailed description
 
 Write the descriptive passage now:`;
 
@@ -121,7 +121,7 @@ Guidelines:
 - Include physical appearance, personality, backstory
 - Add unique quirks, motivations, and flaws
 - Show character through actions and dialogue
-- 500-700 words of character development
+- 800-1200 words of comprehensive character development
 
 Write the character development now:`;
 
@@ -133,7 +133,7 @@ Guidelines:
 - Include conflict, tension, and resolution
 - Add plot twists and character arcs
 - Create compelling story beats
-- 400-600 words of plot development
+- 800-1200 words of detailed plot development
 
 Write the plot outline now:`;
 
@@ -146,7 +146,7 @@ Guidelines:
 - Strong character development
 - Appropriate pacing and tension
 - Match ${selectedGenre} genre conventions
-- 600-900 words
+- 1000-1500 words (write a substantial story section)
 
 Write the story now:`;
     }
@@ -161,7 +161,7 @@ Write the story now:`;
         message: getPromptByMode(),
         model: selectedModel,
         temperature: 0.8, // Higher creativity for novel writing
-        max_tokens: 1200
+        max_tokens: 3000
       });
       
       setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
@@ -189,7 +189,7 @@ Write the story now:`;
 
 "${lastParagraph}"
 
-Continue the story from where they left off. Write 2-3 paragraphs that:
+Continue the story from where they left off. Write 4-6 substantial paragraphs (800-1200 words) that:
 - Flow naturally from their writing
 - Match their writing style and tone
 - Advance the plot or develop characters
@@ -199,7 +199,7 @@ Continue the story from where they left off. Write 2-3 paragraphs that:
 Continue writing:`,
         model: selectedModel,
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: 3000
       });
       
       setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
@@ -267,7 +267,7 @@ Keep suggestions constructive and actionable:`,
 - Hooks the reader immediately
 - Sets up the central conflict or mystery
 - Uses vivid, immersive descriptions
-- Is approximately 300-500 words
+- Is approximately 800-1200 words (write a substantial section)
 
 Begin the novel now:`;
       } else {
@@ -283,7 +283,7 @@ Continue the story naturally and seamlessly. Write the next section that:
 - Develops characters further
 - Maintains the established tone and style
 - Adds tension, conflict, or intrigue
-- Is approximately 300-500 words
+- Is approximately 800-1200 words (write a substantial section)
 
 Continue writing:`;
       }
@@ -292,7 +292,7 @@ Continue writing:`;
         message: promptText,
         model: selectedModel,
         temperature: 0.8,
-        max_tokens: 800
+        max_tokens: 3000
       });
       
       const newContent = response.response || response.message || '';
