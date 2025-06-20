@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Remove standalone output for Vercel deployment
   // output: 'standalone',
   
-  // Security headers
+  // Security headers - Allow iframe for development
   async headers() {
     return [
       {
@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
