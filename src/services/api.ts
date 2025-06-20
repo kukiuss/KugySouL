@@ -10,6 +10,8 @@ import type {
 interface ChatResponse {
   response: string  // Backend returns "response", not "message"
   message?: string  // Fallback for compatibility
+  content?: string  // Additional field for content
+  data?: string     // Additional field for data
   conversation_id?: string
   model?: string
   timestamp?: string
