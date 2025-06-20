@@ -105,12 +105,12 @@ export function HeroSection() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 py-32 text-center">
-        {/* Cyberpunk Premium Badge */}
+        {/* Cyberpunk Premium Badge - Positioned higher to avoid covering avatar */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          className="mb-8"
+          className="mb-16"
         >
           <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500/20 to-pink-500/20 backdrop-blur-md border border-cyan-400/30 shadow-lg shadow-cyan-400/20">
             <Star className="w-5 h-5 text-cyan-400 animate-pulse" />
@@ -124,14 +124,14 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight"
+          className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-tight"
         >
           <span className="block">
             <span className="bg-gradient-to-r from-cyan-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-pulse drop-shadow-2xl">
               KugySouL
             </span>
           </span>
-          <span className="block text-white text-4xl md:text-5xl lg:text-6xl mt-4 drop-shadow-lg">
+          <span className="block text-white text-4xl md:text-5xl lg:text-6xl mt-6 drop-shadow-lg">
             The Future of AI Assistance
           </span>
         </motion.h1>
