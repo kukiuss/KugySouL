@@ -161,7 +161,7 @@ Write the story now:`;
         message: getPromptByMode(),
         model: selectedModel,
         temperature: 0.8, // Higher creativity for novel writing
-        max_tokens: 1500
+        max_tokens: 800
       });
       
       setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
@@ -199,7 +199,7 @@ Continue the story from where they left off. Write 4-6 substantial paragraphs (8
 Continue writing:`,
         model: selectedModel,
         temperature: 0.7,
-        max_tokens: 1500
+        max_tokens: 800
       });
       
       setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
@@ -292,12 +292,25 @@ Continue writing:`;
         message: promptText,
         model: selectedModel,
         temperature: 0.8,
-        max_tokens: 1500
+        max_tokens: 800
       });
       
-      const newContent = response.response || response.message || '';
-      if (newContent) {
+      // Debug logging to see what we get from backend
+      console.log('🔍 Auto Pilot Response:', response);
+      console.log('🔍 Response keys:', Object.keys(response));
+      console.log('🔍 Response.response:', response.response);
+      console.log('🔍 Response.message:', response.message);
+      console.log('🔍 Response.content:', response.content);
+      console.log('🔍 Response.data:', response.data);
+      
+      const newContent = response.response || response.message || response.content || response.data || '';
+      console.log('🔍 Final newContent:', newContent);
+      
+      if (newContent && newContent.trim()) {
+        console.log('✅ Adding content to editor:', newContent.substring(0, 100) + '...');
         setEditorContent(prev => prev ? prev + '\n\n' + newContent : newContent);
+      } else {
+        console.error('❌ No content found in response!', response);
       }
     } catch (error) {
       console.error('Auto-pilot writing failed:', error);
