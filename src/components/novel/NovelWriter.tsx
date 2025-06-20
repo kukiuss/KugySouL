@@ -161,7 +161,7 @@ Write the story now:`;
         message: getPromptByMode(),
         model: selectedModel,
         temperature: 0.8, // Higher creativity for novel writing
-        max_tokens: 3000
+        max_tokens: 1500
       });
       
       setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
@@ -199,7 +199,7 @@ Continue the story from where they left off. Write 4-6 substantial paragraphs (8
 Continue writing:`,
         model: selectedModel,
         temperature: 0.7,
-        max_tokens: 3000
+        max_tokens: 1500
       });
       
       setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
@@ -292,7 +292,7 @@ Continue writing:`;
         message: promptText,
         model: selectedModel,
         temperature: 0.8,
-        max_tokens: 3000
+        max_tokens: 1500
       });
       
       const newContent = response.response || response.message || '';
