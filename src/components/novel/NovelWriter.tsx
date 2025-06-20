@@ -771,18 +771,27 @@ Continue writing:`;
                         className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white text-sm"
                       >
                         <option value="google/gemini-2.0-flash-001">🔥 Gemini 2.0 Flash (Recommended for Novels)</option>
-                        <option value="deepseek/deepseek-r1:free">🚀 DeepSeek R1 (Free - 128K Context)</option>
-                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                        <option value="openai/gpt-4o">GPT-4o</option>
-                        <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                        <option value="deepseek/deepseek-r1">💎 DeepSeek R1 (Paid - No Rate Limit)</option>
+                        <option value="deepseek/deepseek-r1:free">🚀 DeepSeek R1 (Free - 50/day limit)</option>
+                        <option value="anthropic/claude-3.5-sonnet">🎯 Claude 3.5 Sonnet (Paid)</option>
+                        <option value="openai/gpt-4o">💡 GPT-4o (Paid)</option>
+                        <option value="openai/gpt-4o-mini">⚡ GPT-4o Mini (Paid)</option>
                       </select>
                       <p className="text-gray-400 text-xs mt-1">
                         {selectedModel === 'google/gemini-2.0-flash-001' && '🚀 Google\'s latest model - excellent for creative writing with 2M context window'}
-                        {selectedModel === 'deepseek/deepseek-r1:free' && '🆓 FREE model with 128K context - perfect for long novels with reasoning capabilities'}
-                        {selectedModel === 'anthropic/claude-3.5-sonnet' && '🎯 Great for structured writing and analysis'}
-                        {selectedModel === 'openai/gpt-4o' && '💡 Powerful general-purpose model'}
-                        {selectedModel === 'openai/gpt-4o-mini' && '⚡ Fast and efficient for quick generation'}
+                        {selectedModel === 'deepseek/deepseek-r1' && '💎 PAID DeepSeek R1 - No rate limits, 128K context, best for auto pilot'}
+                        {selectedModel === 'deepseek/deepseek-r1:free' && '🆓 FREE model with 128K context - LIMITED to 50 requests/day'}
+                        {selectedModel === 'anthropic/claude-3.5-sonnet' && '🎯 Great for structured writing and analysis - No rate limits'}
+                        {selectedModel === 'openai/gpt-4o' && '💡 Powerful general-purpose model - No rate limits'}
+                        {selectedModel === 'openai/gpt-4o-mini' && '⚡ Fast and efficient for quick generation - No rate limits'}
                       </p>
+                      {selectedModel.includes(':free') && (
+                        <div className="mt-2 p-2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                          <p className="text-yellow-300 text-xs">
+                            ⚠️ <strong>Rate Limited:</strong> Free models limited to 50 requests/day. Consider using paid models for auto pilot.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Language Selection */}
