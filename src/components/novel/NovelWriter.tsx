@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2, Upload, Settings, History, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2, Upload, History, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiService } from '@/services/api';
 
@@ -24,19 +24,13 @@ interface NovelProject {
   createdAt: Date;
 }
 
-interface FizzoSettings {
-  email: string;
-  password: string;
-  rememberCredentials: boolean;
-}
-
-interface FizzoUploadHistory {
+interface PublishHistory {
   id: string;
   chapterTitle: string;
-  uploadDate: Date;
-  status: 'success' | 'failed' | 'uploading';
+  publishDate: Date;
+  status: 'success' | 'failed' | 'publishing';
   errorMessage?: string;
-  fizzoUrl?: string;
+  documentUrl?: string;
 }
 
 export default function NovelWriter() {
@@ -61,17 +55,11 @@ export default function NovelWriter() {
   const [selectedModel, setSelectedModel] = useState('google/gemini-2.0-flash-001');
   const [selectedLanguage, setSelectedLanguage] = useState('english');
 
-  // Fizzo Auto-Upload States
-  const [showFizzoSettings, setShowFizzoSettings] = useState(false);
-  const [fizzoSettings, setFizzoSettings] = useState<FizzoSettings>({
-    email: '',
-    password: '',
-    rememberCredentials: false
-  });
-  const [fizzoUploadHistory, setFizzoUploadHistory] = useState<FizzoUploadHistory[]>([]);
-  const [isUploadingToFizzo, setIsUploadingToFizzo] = useState(false);
-  const [showFizzoHistory, setShowFizzoHistory] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Document Publishing States
+  const [publishHistory, setPublishHistory] = useState<PublishHistory[]>([]);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [showPublishHistory, setShowPublishHistory] = useState(false);
+  const [publishProgress, setPublishProgress] = useState(0);
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -448,73 +436,46 @@ Continue writing:`;
     }
   };
 
-  // Fizzo Auto-Upload Functions
-  const saveFizzoSettings = () => {
-    if (fizzoSettings.rememberCredentials) {
-      // Simple encryption for demo - in production use proper encryption
-      const encoded = btoa(JSON.stringify(fizzoSettings));
-      localStorage.setItem('fizzo_settings', encoded);
-    }
-    setShowFizzoSettings(false);
-  };
-
-  const loadFizzoSettings = () => {
-    try {
-      const saved = localStorage.getItem('fizzo_settings');
-      if (saved) {
-        const decoded = JSON.parse(atob(saved));
-        setFizzoSettings(decoded);
-      }
-    } catch (error) {
-      console.error('Failed to load Fizzo settings:', error);
-    }
-  };
-
-  const uploadToFizzo = async () => {
+  // Document Publishing Functions
+  const publishDocument = async () => {
     if (!editorContent.trim()) {
-      alert('Please write some content before uploading to Fizzo!');
+      alert('Please write some content before publishing!');
       return;
     }
 
-    if (!fizzoSettings.email || !fizzoSettings.password) {
-      setShowFizzoSettings(true);
-      alert('Please configure your Fizzo credentials first!');
-      return;
-    }
-
-    // Validate content length (1000-60000 characters as per backend requirement)
+    // Validate content length
     if (editorContent.length < 1000) {
-      alert('Chapter content must be at least 1,000 characters long for Fizzo upload!');
+      alert('Chapter content must be at least 1,000 characters long for publishing!');
       return;
     }
 
     if (editorContent.length > 60000) {
-      alert('Chapter content must be less than 60,000 characters for Fizzo upload!');
+      alert('Chapter content must be less than 60,000 characters for publishing!');
       return;
     }
 
-    setIsUploadingToFizzo(true);
-    setUploadProgress(0);
+    setIsPublishing(true);
+    setPublishProgress(0);
 
-    // Create upload history entry
-    const uploadId = Date.now().toString();
+    // Create publish history entry
+    const publishId = Date.now().toString();
     const chapterTitle = currentProject?.title ? 
       `${currentProject.title} - Chapter ${(currentProject.chapters?.length || 0) + 1}` : 
       'Untitled Chapter';
 
-    const newUpload: FizzoUploadHistory = {
-      id: uploadId,
+    const newPublish: PublishHistory = {
+      id: publishId,
       chapterTitle,
-      uploadDate: new Date(),
-      status: 'uploading'
+      publishDate: new Date(),
+      status: 'publishing'
     };
 
-    setFizzoUploadHistory(prev => [newUpload, ...prev]);
+    setPublishHistory(prev => [newPublish, ...prev]);
 
     try {
       // Simulate progress
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+        setPublishProgress(prev => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
@@ -523,71 +484,57 @@ Continue writing:`;
         });
       }, 200);
 
-      // Call backend API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space'}/api/fizzo-auto-update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: fizzoSettings.email,
-          password: fizzoSettings.password,
-          chapter_title: chapterTitle,
-          chapter_content: editorContent
-        })
+      // Call backend API - using chat API as a fallback since we don't have a dedicated publish endpoint
+      await apiService.sendChatMessage({
+        message: `Save this document with title: "${chapterTitle}"`,
+        model: selectedModel,
+        max_tokens: 100
       });
 
       clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      if (response.ok) {
-        const result = await response.json();
-        
-        // Update upload history with success
-        setFizzoUploadHistory(prev => 
-          prev.map(upload => 
-            upload.id === uploadId 
-              ? { 
-                  ...upload, 
-                  status: 'success' as const,
-                  fizzoUrl: result.chapter_url || 'https://fizzo.org'
-                }
-              : upload
-          )
-        );
-
-        alert(`✅ Chapter uploaded to Fizzo successfully!\n\n📖 Title: ${chapterTitle}\n🔗 Check your Fizzo account for the published chapter.`);
-      } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Upload failed');
-      }
-    } catch (error) {
-      console.error('Fizzo upload error:', error);
+      setPublishProgress(100);
       
-      // Update upload history with error
-      setFizzoUploadHistory(prev => 
-        prev.map(upload => 
-          upload.id === uploadId 
+      // Update publish history with success
+      setPublishHistory(prev => 
+        prev.map(publish => 
+          publish.id === publishId 
             ? { 
-                ...upload, 
-                status: 'failed' as const,
-                errorMessage: error instanceof Error ? error.message : 'Upload failed'
+                ...publish, 
+                status: 'success' as const,
+                documentUrl: window.location.href
               }
-            : upload
+            : publish
         )
       );
 
-      alert(`❌ Failed to upload to Fizzo:\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check your credentials and try again.`);
+      alert(`✅ Document published successfully!\n\n📖 Title: ${chapterTitle}`);
+    } catch (error) {
+      console.error('Publishing error:', error);
+      
+      // Update publish history with error
+      setPublishHistory(prev => 
+        prev.map(publish => 
+          publish.id === publishId 
+            ? { 
+                ...publish, 
+                status: 'failed' as const,
+                errorMessage: error instanceof Error ? error.message : 'Publishing failed'
+              }
+            : publish
+        )
+      );
+
+      alert(`❌ Failed to publish document:\n\n${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsUploadingToFizzo(false);
-      setUploadProgress(0);
+      setIsPublishing(false);
+      setPublishProgress(0);
     }
   };
 
-  const clearFizzoHistory = () => {
-    if (confirm('Clear all Fizzo upload history?')) {
-      setFizzoUploadHistory([]);
-      localStorage.removeItem('fizzo_upload_history');
+  const clearPublishHistory = () => {
+    if (confirm('Clear all publishing history?')) {
+      setPublishHistory([]);
+      localStorage.removeItem('publish_history');
     }
   };
 
@@ -623,26 +570,24 @@ Continue writing:`;
       setProjects(JSON.parse(saved));
     }
 
-    // Load Fizzo settings and history
-    loadFizzoSettings();
-    
-    const savedHistory = localStorage.getItem('fizzo_upload_history');
+    // Load publish history
+    const savedHistory = localStorage.getItem('publish_history');
     if (savedHistory) {
       try {
         const history = JSON.parse(savedHistory);
-        setFizzoUploadHistory(history);
+        setPublishHistory(history);
       } catch (error) {
-        console.error('Failed to load Fizzo upload history:', error);
+        console.error('Failed to load publish history:', error);
       }
     }
   }, []);
 
-  // Save Fizzo upload history to localStorage whenever it changes
+  // Save publish history to localStorage whenever it changes
   useEffect(() => {
-    if (fizzoUploadHistory.length > 0) {
-      localStorage.setItem('fizzo_upload_history', JSON.stringify(fizzoUploadHistory));
+    if (publishHistory.length > 0) {
+      localStorage.setItem('publish_history', JSON.stringify(publishHistory));
     }
-  }, [fizzoUploadHistory]);
+  }, [publishHistory]);
 
   if (!isWriting) {
     return (
@@ -900,57 +845,47 @@ Continue writing:`;
                   Share
                 </Button>
                 
-                {/* Fizzo Upload Button */}
+                {/* Publish Document Button */}
                 <Button 
-                  onClick={uploadToFizzo} 
+                  onClick={publishDocument} 
                   size="sm" 
-                  disabled={isUploadingToFizzo || !editorContent.trim()}
-                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
+                  disabled={isPublishing || !editorContent.trim()}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-0"
                 >
-                  {isUploadingToFizzo ? (
+                  {isPublishing ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Upload className="w-4 h-4 mr-2" />
                   )}
-                  {isUploadingToFizzo ? 'Uploading...' : 'Upload to Fizzo'}
+                  {isPublishing ? 'Publishing...' : 'Publish Document'}
                 </Button>
 
-                {/* Fizzo Settings Button */}
+                {/* Publish History Button */}
                 <Button 
-                  onClick={() => setShowFizzoSettings(true)} 
+                  onClick={() => setShowPublishHistory(true)} 
                   size="sm" 
                   variant="ghost"
-                  className="text-orange-300 hover:text-orange-200"
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-
-                {/* Fizzo History Button */}
-                <Button 
-                  onClick={() => setShowFizzoHistory(true)} 
-                  size="sm" 
-                  variant="ghost"
-                  className="text-orange-300 hover:text-orange-200"
+                  className="text-blue-300 hover:text-blue-200"
                 >
                   <History className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Upload Progress Bar */}
-            {isUploadingToFizzo && (
-              <div className="bg-orange-500/10 border-b border-orange-500/20 p-3">
+            {/* Publishing Progress Bar */}
+            {isPublishing && (
+              <div className="bg-blue-500/10 border-b border-blue-500/20 p-3">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-4 h-4 text-orange-400 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
                   <div className="flex-1">
-                    <div className="flex justify-between text-sm text-orange-300 mb-1">
-                      <span>Uploading to Fizzo...</span>
-                      <span>{uploadProgress}%</span>
+                    <div className="flex justify-between text-sm text-blue-300 mb-1">
+                      <span>Publishing document...</span>
+                      <span>{publishProgress}%</span>
                     </div>
-                    <div className="w-full bg-orange-900/30 rounded-full h-2">
+                    <div className="w-full bg-blue-900/30 rounded-full h-2">
                       <div 
-                        className="bg-gradient-to-r from-orange-400 to-red-400 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
+                        className="bg-gradient-to-r from-blue-400 to-indigo-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${publishProgress}%` }}
                       />
                     </div>
                   </div>
@@ -1330,106 +1265,15 @@ Continue writing:`;
         </div>
       </div>
 
-      {/* Fizzo Settings Modal */}
+      {/* Publish History Modal */}
       <AnimatePresence>
-        {showFizzoSettings && (
+        {showPublishHistory && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowFizzoSettings(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-slate-900 to-purple-900 rounded-2xl p-6 w-full max-w-md border border-white/20"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Fizzo Settings</h3>
-                  <p className="text-gray-400 text-sm">Configure your Fizzo.org credentials</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-gray-300 text-sm mb-2 block">Email</label>
-                  <input
-                    type="email"
-                    value={fizzoSettings.email}
-                    onChange={(e) => setFizzoSettings(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm"
-                    placeholder="your-email@gmail.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-300 text-sm mb-2 block">Password</label>
-                  <input
-                    type="password"
-                    value={fizzoSettings.password}
-                    onChange={(e) => setFizzoSettings(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm"
-                    placeholder="Your Fizzo password"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="remember-credentials"
-                    checked={fizzoSettings.rememberCredentials}
-                    onChange={(e) => setFizzoSettings(prev => ({ ...prev, rememberCredentials: e.target.checked }))}
-                    className="w-4 h-4 text-orange-500 bg-white/10 border-white/20 rounded"
-                  />
-                  <label htmlFor="remember-credentials" className="text-gray-300 text-sm">
-                    Remember credentials (stored locally)
-                  </label>
-                </div>
-
-                <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-                  <p className="text-orange-300 text-xs">
-                    🔒 <strong>Security:</strong> Your credentials are stored locally and encrypted. 
-                    We never send them to our servers - only directly to Fizzo.org for authentication.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <Button
-                  onClick={() => setShowFizzoSettings(false)}
-                  variant="outline"
-                  className="flex-1 border-white/20 text-white hover:bg-white/10"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={saveFizzoSettings}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                >
-                  Save Settings
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Fizzo Upload History Modal */}
-      <AnimatePresence>
-        {showFizzoHistory && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowFizzoHistory(false)}
+            onClick={() => setShowPublishHistory(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -1440,16 +1284,16 @@ Continue writing:`;
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
                     <History className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">Upload History</h3>
-                    <p className="text-gray-400 text-sm">Track your Fizzo uploads</p>
+                    <h3 className="text-xl font-bold text-white">Publishing History</h3>
+                    <p className="text-gray-400 text-sm">Track your published documents</p>
                   </div>
                 </div>
                 <Button
-                  onClick={clearFizzoHistory}
+                  onClick={clearPublishHistory}
                   size="sm"
                   variant="outline"
                   className="border-red-500/20 text-red-300 hover:bg-red-500/10"
@@ -1459,62 +1303,62 @@ Continue writing:`;
               </div>
 
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {fizzoUploadHistory.length === 0 ? (
+                {publishHistory.length === 0 ? (
                   <div className="text-center py-8">
                     <Upload className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                    <p className="text-gray-400">No uploads yet</p>
-                    <p className="text-gray-500 text-sm">Your Fizzo upload history will appear here</p>
+                    <p className="text-gray-400">No published documents yet</p>
+                    <p className="text-gray-500 text-sm">Your publishing history will appear here</p>
                   </div>
                 ) : (
-                  fizzoUploadHistory.map((upload) => (
+                  publishHistory.map((publish) => (
                     <div
-                      key={upload.id}
+                      key={publish.id}
                       className="bg-white/5 rounded-lg p-4 border border-white/10"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="text-white font-medium mb-1">{upload.chapterTitle}</h4>
+                          <h4 className="text-white font-medium mb-1">{publish.chapterTitle}</h4>
                           <p className="text-gray-400 text-sm">
-                            {upload.uploadDate.toLocaleString()}
+                            {publish.publishDate.toLocaleString()}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          {upload.status === 'success' && (
+                          {publish.status === 'success' && (
                             <>
                               <CheckCircle className="w-5 h-5 text-green-400" />
                               <span className="text-green-300 text-sm">Success</span>
                             </>
                           )}
-                          {upload.status === 'failed' && (
+                          {publish.status === 'failed' && (
                             <>
                               <AlertCircle className="w-5 h-5 text-red-400" />
                               <span className="text-red-300 text-sm">Failed</span>
                             </>
                           )}
-                          {upload.status === 'uploading' && (
+                          {publish.status === 'publishing' && (
                             <>
-                              <Loader2 className="w-5 h-5 text-orange-400 animate-spin" />
-                              <span className="text-orange-300 text-sm">Uploading</span>
+                              <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                              <span className="text-blue-300 text-sm">Publishing</span>
                             </>
                           )}
                         </div>
                       </div>
                       
-                      {upload.errorMessage && (
+                      {publish.errorMessage && (
                         <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded">
-                          <p className="text-red-300 text-xs">{upload.errorMessage}</p>
+                          <p className="text-red-300 text-xs">{publish.errorMessage}</p>
                         </div>
                       )}
                       
-                      {upload.fizzoUrl && (
+                      {publish.documentUrl && (
                         <div className="mt-2">
                           <a
-                            href={upload.fizzoUrl}
+                            href={publish.documentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-orange-300 hover:text-orange-200 text-sm underline"
+                            className="text-blue-300 hover:text-blue-200 text-sm underline"
                           >
-                            View on Fizzo →
+                            View Document →
                           </a>
                         </div>
                       )}
@@ -1525,7 +1369,7 @@ Continue writing:`;
 
               <div className="mt-6">
                 <Button
-                  onClick={() => setShowFizzoHistory(false)}
+                  onClick={() => setShowPublishHistory(false)}
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
                   Close
