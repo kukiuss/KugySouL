@@ -3,7 +3,17 @@ import { config, endpoints } from '@/lib/config'
 import type { 
   ApiConfig, 
   CreateConversationRequest, 
-  CreateConversationResponse 
+  CreateConversationResponse,
+  LoginRequest,
+  LoginResponse,
+  AnalyzeWritingStyleRequest,
+  AnalyzeWritingStyleResponse,
+  GenerateHumanContentRequest,
+  GenerateHumanContentResponse,
+  HumanizeTextRequest,
+  HumanizeTextResponse,
+  CheckAIDetectionRequest,
+  CheckAIDetectionResponse
 } from '@/types'
 
 // Additional interfaces for chat functionality
@@ -111,6 +121,48 @@ export const apiService = {
     return response.data
   },
 
+  // User login
+  async login(data: LoginRequest): Promise<LoginResponse> {
+    const response = await api.post(endpoints.login, data)
+    return response.data
+  },
+
+  // Analyze writing style
+  async analyzeWritingStyle(data: AnalyzeWritingStyleRequest): Promise<AnalyzeWritingStyleResponse> {
+    const response = await api.post(endpoints.analyzeWritingStyle, data)
+    return response.data
+  },
+
+  // Generate human-like content
+  async generateHumanContent(data: GenerateHumanContentRequest): Promise<GenerateHumanContentResponse> {
+    const response = await api.post(endpoints.generateHumanContent, data)
+    return response.data
+  },
+
+  // Humanize AI-generated text
+  async humanizeText(data: HumanizeTextRequest): Promise<HumanizeTextResponse> {
+    const response = await api.post(endpoints.humanizeText, data)
+    return response.data
+  },
+
+  // Check AI detection risk
+  async checkAIDetection(data: CheckAIDetectionRequest): Promise<CheckAIDetectionResponse> {
+    const response = await api.post(endpoints.checkAIDetection, data)
+    return response.data
+  },
+
+  // Get conversations
+  async getConversations(): Promise<unknown> {
+    const response = await api.get(endpoints.conversations)
+    return response.data
+  },
+
+  // Simple conversation
+  async simpleConversation(data: Record<string, unknown>): Promise<unknown> {
+    const response = await api.post(endpoints.simpleConversation, data)
+    return response.data
+  },
+
   // Generic GET request
   async get<T>(url: string): Promise<T> {
     const response = await api.get(url)
@@ -145,7 +197,7 @@ export const apiService = {
     max_tokens?: number
     temperature?: number
   }): Promise<ChatResponse> {
-    const response = await api.post('/chat/message', data)
+    const response = await api.post(endpoints.chatMessage, data)
     return response.data
   },
 

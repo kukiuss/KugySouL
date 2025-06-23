@@ -19,4 +19,11 @@ export const endpoints = {
   config: '/api/options/config',
   conversations: '/api/conversations',
   messages: '/api/messages',
+  login: '/api/login',
+  analyzeWritingStyle: '/api/analyze-writing-style',
+  generateHumanContent: '/api/generate-human-content',
+  humanizeText: '/api/humanize-text',
+  checkAIDetection: '/api/check-ai-detection',
+  chatMessage: '/chat/message',
+  simpleConversation: '/api/simple/conversation'
 } as const
