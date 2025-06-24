@@ -25,7 +25,12 @@ interface EnhancedChatResponse {
     completion_tokens: number
     total_tokens: number
   }
-  error?: any
+  error?: {
+    message: string;
+    type?: string;
+    code?: string | number;
+    [key: string]: unknown;
+  }
   debug_info?: string
 }
 

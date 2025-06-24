@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2, Upload, History, CheckCircle, AlertCircle, Loader2, Key } from 'lucide-react';
+import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2, Upload, History, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiService } from '@/services/api';
 import ApiKeySetup from './ApiKeySetup';
