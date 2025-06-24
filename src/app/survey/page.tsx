@@ -8,7 +8,14 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react'
 export default function SurveyPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
-  const [selectedOptions, setSelectedOptions] = useState<Record<number, string>>({})
+  const [selectedOptions, setSelectedOptions] = useState<Record<number, string>>(() => {
+    // Cek apakah ada data survey yang tersimpan di localStorage
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('userSurveyData')
+      return savedData ? JSON.parse(savedData) : {}
+    }
+    return {}
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const surveySteps = [
@@ -87,6 +94,8 @@ export default function SurveyPage() {
   const handleSubmit = () => {
     setIsSubmitting(true)
     // Simulasi pengiriman data survey
+    // Simpan data survey ke localStorage untuk referensi di masa depan
+    localStorage.setItem('userSurveyData', JSON.stringify(selectedOptions))
     setTimeout(() => {
       router.push('/chat')
     }, 1500)
@@ -174,7 +183,7 @@ export default function SurveyPage() {
           transition={{ duration: 0.3 }}
         >
           <h1 className="text-3xl font-bold text-white mb-2">
-            Hello! Let&apos;s get started.
+            Hello! Let&apos;s get to know you better.
           </h1>
           <h2 className="text-2xl font-semibold text-white mb-8">
             {surveySteps[currentStep].question}

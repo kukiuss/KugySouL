@@ -118,7 +118,7 @@ export default function LoginPage() {
           >
             <button
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={true}
               className={`w-full flex items-center justify-center gap-3 py-4 px-4 bg-white hover:bg-gray-100 text-gray-900 font-medium rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group ${
                 selectedOption === 'google' ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 border-2 border-blue-500/50 text-white' : ''
               }`}
@@ -131,7 +131,7 @@ export default function LoginPage() {
                   <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z" />
                 </svg>
               </div>
-              <span className="flex-1 text-center">Continue with Google</span>
+              <span className="flex-1 text-center">Continue with Google (Coming Soon)</span>
               <div className="absolute inset-0 bg-gradient-to-r from-gray-100/0 via-gray-100/30 to-gray-100/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             </button>
           </motion.div>
@@ -169,7 +169,7 @@ export default function LoginPage() {
               <span>
                 {selectedOption === 'google' 
                   ? 'Connecting to Google...' 
-                  : 'Preparing your experience...'}
+                  : 'Preparing your guest experience...'}
               </span>
             </div>
           </motion.div>
