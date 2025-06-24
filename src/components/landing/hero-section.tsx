@@ -8,22 +8,28 @@ import {
   Zap,
   Sparkles,
   BookOpen,
-  Pen,
   Star,
-  Brain,
-  MessageSquare
+  Brain
 } from 'lucide-react'
 
 export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Anime Background */}
+      {/* Anime Background with Parallax Effect */}
       <div className="absolute inset-0">
-        {/* Background Image */}
-        <div 
+        {/* Background Image with Parallax */}
+        <motion.div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url('/images/backgrounds/anime-bg-pixai.png')`
+          }}
+          animate={{
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut"
           }}
         />
         
@@ -112,10 +118,11 @@ export function HeroSection() {
           transition={{ delay: 0.2, duration: 0.6 }}
           className="mb-16"
         >
-          <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500/20 to-pink-500/20 backdrop-blur-md border border-cyan-400/30 shadow-lg shadow-cyan-400/20">
+          <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500/20 to-pink-500/20 backdrop-blur-xl border border-cyan-400/30 shadow-lg shadow-cyan-400/20 hover:shadow-xl hover:shadow-cyan-400/30 transition-all duration-300 transform hover:scale-105">
             <Star className="w-5 h-5 text-cyan-400 animate-pulse" />
             <span className="text-white font-semibold tracking-wide">Ultra Premium AI Platform</span>
             <Sparkles className="w-5 h-5 text-pink-400 animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500/5 to-pink-500/5 opacity-0 hover:opacity-100 transition-opacity duration-300" />
           </div>
         </motion.div>
 
@@ -150,31 +157,33 @@ export function HeroSection() {
           ever created.
         </motion.p>
 
-        {/* Cyberpunk CTA Buttons */}
+        {/* Single CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.8 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+          className="flex justify-center mb-16"
         >
-          <Link
-            href="/chat"
-            className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-pink-500 rounded-xl hover:from-cyan-400 hover:to-pink-400 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30 border border-cyan-400/30"
+          <motion.div
+            whileHover={{ 
+              rotateY: 5, 
+              rotateX: -5,
+              scale: 1.05,
+              transition: { duration: 0.3 }
+            }}
+            className="perspective-1000"
           >
-            <MessageSquare className="w-5 h-5 mr-2" />
-            Start AI Chat
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 to-pink-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-          </Link>
-          
-          <Link
-            href="/novel"
-            className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white border-2 border-pink-400/40 rounded-xl hover:border-pink-400/60 hover:bg-pink-500/10 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm hover:shadow-lg hover:shadow-pink-400/20"
-          >
-            <BookOpen className="w-5 h-5 mr-2" />
-            Write Novels
-            <Pen className="w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" />
-          </Link>
+            <Link
+              href="/auth/login"
+              className="group relative inline-flex items-center justify-center px-12 py-5 text-xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-pink-500 rounded-xl hover:from-cyan-400 hover:to-pink-400 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/30 border border-cyan-400/30 backdrop-blur-md"
+            >
+              <Sparkles className="w-6 h-6 mr-3" />
+              Get Started
+              <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 to-pink-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+              <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-pink-500/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            </Link>
+          </motion.div>
         </motion.div>
 
         {/* Cyberpunk Feature Stats */}

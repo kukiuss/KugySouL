@@ -32,6 +32,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Kita akan merender layout tanpa header dan footer untuk halaman tertentu
+  // Ini akan dihandle oleh komponen Header dan Footer yang sudah kita modifikasi
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-background font-sans antialiased">
