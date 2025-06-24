@@ -4,6 +4,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Exclude OpenHands-Backend
+OpenHands-Backend/
+
 # Production
 /build
 /.next/
