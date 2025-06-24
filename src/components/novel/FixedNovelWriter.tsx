@@ -3,10 +3,7 @@
 // This is a fixed version of the NovelWriter component that properly handles the OpenRouter API response
 // The main changes are in the autoPilotWrite function to ensure it correctly processes the response
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2, Upload, History, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { apiService } from '@/services/api';
 
 // Import the original NovelWriter component and extend it
@@ -17,11 +14,29 @@ const useFixedAutoPilot = () => {
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [lastResponse, setLastResponse] = useState<Record<string, unknown> | null>(null);
 
+  // Define proper types for the parameters
+  interface Project {
+    currentChapterIndex: number;
+    chapters: Array<{
+      title: string;
+      content: string;
+      summary?: string;
+    }>;
+    [key: string]: unknown;
+  }
+
+  interface Chapter {
+    title: string;
+    content: string;
+    summary?: string;
+    [key: string]: unknown;
+  }
+
   // This is the fixed version of the autoPilotWrite function
   const fixedAutoPilotWrite = async (
     isGenerating: boolean,
-    currentProject: any,
-    currentChapter: any,
+    currentProject: Project,
+    currentChapter: Chapter,
     chapterWordCount: number,
     editorContent: string,
     selectedLanguage: string,
