@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Loader2, Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { enhancedApiService } from '@/services/enhancedApi';
 
@@ -96,33 +96,70 @@ export default function OpenRouterTest() {
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="text-sm font-medium mb-1 block">Test Type</label>
-            <Select value={testType} onValueChange={(value: any) => setTestType(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select test type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="backend">Backend API</SelectItem>
-                <SelectItem value="direct">Direct OpenRouter API</SelectItem>
-                <SelectItem value="novel">Novel Writing Endpoint</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Model</label>
-            <Select value={model} onValueChange={setModel} disabled={testType === 'novel'}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</SelectItem>
-                <SelectItem value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</SelectItem>
-                <SelectItem value="anthropic/claude-3-opus">Claude 3 Opus</SelectItem>
-                <SelectItem value="meta-llama/llama-3-70b-instruct">Llama 3 70B</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Button 
+                variant={testType === 'backend' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setTestType('backend')}
+                className="flex-1"
+              >
+                Backend API
+              </Button>
+              <Button 
+                variant={testType === 'direct' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setTestType('direct')}
+                className="flex-1"
+              >
+                Direct API
+              </Button>
+              <Button 
+                variant={testType === 'novel' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setTestType('novel')}
+                className="flex-1"
+              >
+                Novel API
+              </Button>
+            </div>
           </div>
         </div>
+        
+        {testType !== 'novel' && (
+          <div>
+            <label className="text-sm font-medium mb-1 block">Model</label>
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                variant={model === 'anthropic/claude-3.5-sonnet' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setModel('anthropic/claude-3.5-sonnet')}
+              >
+                Claude 3.5 Sonnet
+              </Button>
+              <Button 
+                variant={model === 'google/gemini-2.0-flash-001' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setModel('google/gemini-2.0-flash-001')}
+              >
+                Gemini 2.0 Flash
+              </Button>
+              <Button 
+                variant={model === 'anthropic/claude-3-opus' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setModel('anthropic/claude-3-opus')}
+              >
+                Claude 3 Opus
+              </Button>
+              <Button 
+                variant={model === 'meta-llama/llama-3-70b-instruct' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setModel('meta-llama/llama-3-70b-instruct')}
+              >
+                Llama 3 70B
+              </Button>
+            </div>
+          </div>
+        )}
         
         <div>
           <label className="text-sm font-medium mb-1 block">Prompt</label>
