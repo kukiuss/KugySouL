@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Loader2, Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { enhancedApiService } from '@/services/enhancedApi';
 
@@ -15,7 +14,7 @@ export default function OpenRouterTest() {
   const [error, setError] = useState<string | null>(null);
   const [testType, setTestType] = useState<'backend' | 'direct' | 'novel'>('backend');
   const [model, setModel] = useState('anthropic/claude-3.5-sonnet');
-  const [responseDetails, setResponseDetails] = useState<any>(null);
+  const [responseDetails, setResponseDetails] = useState<Record<string, unknown> | null>(null);
 
   const runTest = async () => {
     if (!prompt.trim()) {
@@ -89,7 +88,7 @@ export default function OpenRouterTest() {
       <CardHeader>
         <CardTitle>OpenRouter API Test</CardTitle>
         <CardDescription>
-          Test the OpenRouter API integration to ensure it's working properly
+          Test the OpenRouter API integration to ensure it&apos;s working properly
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
