@@ -8,10 +8,8 @@ import {
   Zap,
   Sparkles,
   BookOpen,
-  Pen,
   Star,
-  Brain,
-  MessageSquare
+  Brain
 } from 'lucide-react'
 
 export function HeroSection() {

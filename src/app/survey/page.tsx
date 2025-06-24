@@ -174,7 +174,7 @@ export default function SurveyPage() {
           transition={{ duration: 0.3 }}
         >
           <h1 className="text-3xl font-bold text-white mb-2">
-            Hello! Let's get started.
+            Hello! Let&apos;s get started.
           </h1>
           <h2 className="text-2xl font-semibold text-white mb-8">
             {surveySteps[currentStep].question}

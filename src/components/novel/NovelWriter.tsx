@@ -562,7 +562,7 @@ Continue writing:`;
     
     setLastSaved(new Date());
     setTimeout(() => setIsAutoSaving(false), 1000);
-  }, [currentProject, currentChapter, editorContent, projects]);
+  }, [currentProject, currentChapter, editorContent, projects, saveToLocalStorage]);
 
   const saveToLocalStorage = (project: NovelProject) => {
     try {
