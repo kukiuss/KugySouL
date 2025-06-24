@@ -130,7 +130,13 @@ export default function NovelWriter() {
     setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
     
     // Save to localStorage
-    saveToLocalStorage(updatedProject);
+    try {
+      const projectsToSave = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
+      localStorage.setItem('novel_projects', JSON.stringify(projectsToSave));
+      console.log('✅ Project saved to localStorage');
+    } catch (error) {
+      console.error('❌ Failed to save to localStorage:', error);
+    }
   };
 
   const switchToChapter = (chapterIndex: number) => {
@@ -151,7 +157,13 @@ export default function NovelWriter() {
     setChapterWordCount(chapter.wordCount);
     
     // Save to localStorage
-    saveToLocalStorage(updatedProject);
+    try {
+      const projectsToSave = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
+      localStorage.setItem('novel_projects', JSON.stringify(projectsToSave));
+      console.log('✅ Project saved to localStorage');
+    } catch (error) {
+      console.error('❌ Failed to save to localStorage:', error);
+    }
   };
 
   const getPromptByMode = () => {
@@ -454,7 +466,15 @@ Continue writing:`;
     };
     
     setCurrentProject(updatedProject);
-    saveToLocalStorage(updatedProject);
+    
+    // Save to localStorage
+    try {
+      const projectsToSave = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
+      localStorage.setItem('novel_projects', JSON.stringify(projectsToSave));
+      console.log('✅ Project saved to localStorage');
+    } catch (error) {
+      console.error('❌ Failed to save to localStorage:', error);
+    }
     
     // Auto-create next chapter if in auto-pilot mode
     if (autoPilotMode) {
@@ -558,21 +578,17 @@ Continue writing:`;
     setProjects(prev => prev.map(p => p.id === currentProject.id ? updatedProject : p));
     
     // Save to localStorage
-    saveToLocalStorage(updatedProject);
-    
-    setLastSaved(new Date());
-    setTimeout(() => setIsAutoSaving(false), 1000);
-  }, [currentProject, currentChapter, editorContent, projects]);
-
-  const saveToLocalStorage = (project: NovelProject) => {
     try {
-      const updatedProjects = projects.map(p => p.id === project.id ? project : p);
+      const updatedProjects = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
       localStorage.setItem('novel_projects', JSON.stringify(updatedProjects));
       console.log('✅ Project saved to localStorage');
     } catch (error) {
       console.error('❌ Failed to save to localStorage:', error);
     }
-  };
+    
+    setLastSaved(new Date());
+    setTimeout(() => setIsAutoSaving(false), 1000);
+  }, [currentProject, currentChapter, editorContent, projects]);
 
   const loadFromLocalStorage = () => {
     try {
