@@ -70,10 +70,14 @@ export default function ApiKeySetup() {
           message: `API key validation failed: ${response.status} ${response.statusText}`
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error';
+      
       setTestResult({
         success: false,
-        message: `Error testing API key: ${error.message || 'Unknown error'}`
+        message: `Error testing API key: ${errorMessage}`
       });
     } finally {
       setIsTesting(false);
