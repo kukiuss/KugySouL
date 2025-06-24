@@ -1,7 +1,21 @@
+'use client'
+
 import Link from 'next/link'
 import { Bot, Github, Twitter, Linkedin, Mail } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 export function Footer() {
+  // Halaman yang tidak perlu menampilkan footer
+  const noFooterPaths = ['/auth/login', '/survey']
+  
+  // Gunakan hook usePathname untuk mendapatkan path saat ini
+  const pathname = usePathname()
+  
+  // Jika path saat ini adalah halaman utama (root), jangan tampilkan footer
+  // Atau jika path saat ini ada dalam daftar noFooterPaths, jangan tampilkan footer
+  if (pathname === '/' || noFooterPaths.includes(pathname)) {
+    return null
+  }
   return (
     <footer className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 border-t border-white/10">
       <div className="mx-auto max-w-7xl px-4 py-16 lg:px-8">
