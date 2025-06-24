@@ -9,10 +9,46 @@ import { apiService } from '@/services/api';
 // Import the original NovelWriter component and extend it
 import OriginalNovelWriter from './NovelWriter';
 
+// Import the EnhancedChatResponse interface
+import { enhancedApiService } from '@/services/enhancedApi';
+
 // Create a fixed version of the autoPilotWrite function
 const useFixedAutoPilot = () => {
   const [debugInfo, setDebugInfo] = useState<string>('');
-  const [lastResponse, setLastResponse] = useState<Record<string, unknown> | null>(null);
+  
+  // Define the ChatResponse type based on the API response structure
+  type ChatResponse = {
+    response?: string;
+    message?: string;
+    content?: string;
+    data?: string;
+    conversation_id?: string;
+    model?: string;
+    timestamp?: string;
+    status?: string;
+    choices?: Array<{
+      message?: {
+        content?: string;
+        role?: string;
+      };
+      text?: string;
+      index?: number;
+    }>;
+    usage?: {
+      prompt_tokens: number;
+      completion_tokens: number;
+      total_tokens: number;
+    };
+    error?: {
+      message: string;
+      type?: string;
+      code?: string | number;
+    };
+    debug_info?: string;
+    [key: string]: unknown; // Index signature to allow any string key
+  };
+  
+  const [lastResponse, setLastResponse] = useState<ChatResponse | null>(null);
 
   // Define proper types for the parameters
   interface Project {
