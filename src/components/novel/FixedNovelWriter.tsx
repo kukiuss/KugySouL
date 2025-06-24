@@ -9,8 +9,7 @@ import { apiService } from '@/services/api';
 // Import the original NovelWriter component and extend it
 import OriginalNovelWriter from './NovelWriter';
 
-// Import the EnhancedChatResponse interface
-import { enhancedApiService } from '@/services/enhancedApi';
+// No need to import enhancedApiService as it's not used
 
 // Create a fixed version of the autoPilotWrite function
 const useFixedAutoPilot = () => {
