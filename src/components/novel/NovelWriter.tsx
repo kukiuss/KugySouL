@@ -337,8 +337,8 @@ Keep suggestions constructive and actionable:`,
   const autoPilotWrite = async () => {
     if (isGenerating || !currentProject || !currentChapter) return;
     
-    // Check if current chapter is complete (1800-2000 words)
-    if (chapterWordCount >= 1800) {
+    // Check if current chapter is complete (2000+ words)
+    if (chapterWordCount >= 2000) {
       // Complete current chapter and create new one
       await completeCurrentChapter();
       return;
@@ -351,7 +351,7 @@ Keep suggestions constructive and actionable:`,
         : 'Write in English language. ';
       
       const remainingWords = 2000 - chapterWordCount;
-      const isChapterEnding = remainingWords <= 400; // Start wrapping up when close to limit
+      const isChapterEnding = remainingWords <= 200; // Start wrapping up when very close to limit
       
       let promptText = '';
       
@@ -364,15 +364,15 @@ Keep suggestions constructive and actionable:`,
 
 ${previousChapterSummary ? `Previous chapter summary: ${previousChapterSummary}\n\n` : ''}
 
-Write Chapter ${chapterNumber} of this ${selectedGenre} novel. Create an engaging chapter that:
+Write the BEGINNING of Chapter ${chapterNumber} of this ${selectedGenre} novel. Create an engaging opening that:
 
 - ${chapterNumber === 1 ? 'Introduces the main character and setting' : 'Continues from the previous chapter naturally'}
 - Establishes clear chapter goals and conflicts
 - Uses vivid, immersive descriptions
 - Has a proper chapter structure (beginning, middle, end)
 - Builds toward a chapter climax or cliffhanger
-- Write approximately 400-600 words for this section
-- Remember: Total chapter should be 1800-2000 words maximum
+- Write approximately 400-600 words for this OPENING section
+- Remember: Total chapter should be 1800-2000 words maximum (this is just the beginning)
 
 Begin Chapter ${chapterNumber}:`;
       } else {
@@ -386,6 +386,7 @@ Current chapter content (last part):
 "${lastSection}"
 
 IMPORTANT: This chapter is nearing completion (${chapterWordCount} words written, target: 1800-2000 words).
+ONLY write the FINAL section that continues from where the story left off. DO NOT rewrite existing content.
 
 Write the FINAL section of this chapter that:
 - Brings the chapter to a satisfying conclusion
@@ -395,14 +396,16 @@ Write the FINAL section of this chapter that:
 - Write approximately ${remainingWords} words to complete the chapter
 - End with a compelling cliffhanger or transition
 
-Complete the chapter:`;
+CONTINUE WRITING THE FINAL SECTION (DO NOT REWRITE EXISTING CONTENT):`;
         } else {
           promptText = `You are continuing Chapter ${currentProject.currentChapterIndex + 1} of this ${selectedGenre} novel. ${languageInstruction}
 
 Current chapter content (last part):
 "${lastSection}"
 
-Continue the chapter naturally. Write the next section that:
+IMPORTANT: ONLY write the NEXT section that continues from where the story left off. DO NOT rewrite or repeat existing content.
+
+Write the next section that:
 - Flows perfectly from the previous text
 - Advances the chapter's plot meaningfully
 - Develops characters further
@@ -411,7 +414,7 @@ Continue the chapter naturally. Write the next section that:
 - Write approximately 400-600 words
 - Remember: Chapter target is 1800-2000 words total (currently ${chapterWordCount} words)
 
-Continue writing:`;
+CONTINUE WRITING FROM WHERE THE STORY LEFT OFF (DO NOT REWRITE EXISTING CONTENT):`;
         }
       }
 
@@ -596,7 +599,8 @@ The story continues with more exciting developments. The characters face new cha
     } catch (error) {
       console.error('Auto-pilot writing failed:', error);
       setAutoPilotStatus('fallback');
-      stopAutoPilot();
+      // Don't stop autopilot immediately, just log the error and continue
+      // The interval will try again in the next cycle
     } finally {
       setIsGenerating(false);
       // Reset status after a delay
