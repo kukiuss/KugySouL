@@ -428,7 +428,7 @@ CRITICAL RULES:
           message: promptText,
           model: selectedModel,
           temperature: 0.8,
-          max_tokens: 1000
+          max_tokens: 2000 // Increased from 1000 to 2000 for longer content generation
         });
         
         const newContent = response.response || response.message || '';
@@ -462,11 +462,12 @@ CRITICAL RULES:
           const similarity = significantNewWords.length > 0 ? overlapCount / Math.min(15, significantNewWords.length) : 0;
           const similarityThreshold = 0.8; // Increased threshold
           
-          // Temporarily disable similarity check for debugging
+          // Re-enabled similarity check with optimized threshold
           console.log(`Similarity check: ${(similarity * 100).toFixed(1)}% (threshold: ${(similarityThreshold * 100).toFixed(1)}%)`);
+          console.log(`Content length: ${cleanedContent.length} characters`);
           
-          // Only add content if it has sufficient length (disabled similarity check for now)
-          if (cleanedContent.length > 30) {
+          // Only add content if it's not too similar and has sufficient length
+          if (similarity < similarityThreshold && cleanedContent.length > 30) {
             const updatedContent = editorContent + (editorContent ? '\n\n' : '') + cleanedContent;
             setEditorContent(updatedContent);
             
