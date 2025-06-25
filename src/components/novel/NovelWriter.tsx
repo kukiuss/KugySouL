@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Pen, Sparkles, Download, Share2, Save, Wand2, Brain, Zap, Trash2, Upload, History, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiService } from '@/services/api';
+import ApiKeySetup from './ApiKeySetup';
 
 interface NovelChapter {
   id: string;
@@ -62,6 +63,7 @@ export default function NovelWriter() {
   const [currentChapter, setCurrentChapter] = useState<NovelChapter | null>(null);
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [autoPilotStatus, setAutoPilotStatus] = useState<'idle' | 'backend' | 'direct' | 'novel' | 'fallback'>('idle');
 
   // Document Publishing States
   const [publishHistory, setPublishHistory] = useState<PublishHistory[]>([]);
@@ -413,17 +415,175 @@ Continue writing:`;
         }
       }
 
-      const response = await apiService.sendChatMessage({
-        message: promptText,
-        model: selectedModel,
-        temperature: 0.8,
-        max_tokens: 600
-      });
+      console.log('📝 Auto-pilot prompt:', promptText.substring(0, 100) + '...');
       
-      const newContent = response.response || response.message || response.content || response.data || '';
-      
-      if (newContent && newContent.trim()) {
-        const updatedContent = editorContent ? editorContent + '\n\n' + newContent : newContent;
+      try {
+        // First try using the backend API
+        setAutoPilotStatus('backend');
+        const response = await apiService.sendChatMessage({
+          message: promptText,
+          model: selectedModel,
+          temperature: 0.8,
+          max_tokens: 600
+        });
+        
+        console.log('📊 Auto-pilot response:', response);
+        
+        // Try to extract content from various possible response formats
+        let newContent = '';
+        
+        if (response && typeof response === 'object') {
+          // Try all possible response formats
+          if (response.response && typeof response.response === 'string') {
+            newContent = response.response;
+            console.log('Content extracted from response.response');
+          } else if (response.message && typeof response.message === 'string') {
+            newContent = response.message;
+            console.log('Content extracted from response.message');
+          } else if (response.content && typeof response.content === 'string') {
+            newContent = response.content;
+            console.log('Content extracted from response.content');
+          } else if (response.data && typeof response.data === 'string') {
+            newContent = response.data;
+            console.log('Content extracted from response.data');
+          } else if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
+            // Handle OpenAI/OpenRouter format
+            const choice = response.choices[0];
+            if (choice.message && choice.message.content) {
+              newContent = choice.message.content;
+              console.log('Content extracted from response.choices[0].message.content');
+            } else if (choice.text) {
+              newContent = choice.text;
+              console.log('Content extracted from response.choices[0].text');
+            }
+          }
+        } else if (typeof response === 'string') {
+          newContent = response;
+          console.log('Response was a string');
+        }
+        
+        // If we couldn't extract content, try using the novel writing endpoint
+        if (!newContent || !newContent.trim()) {
+          console.log('No content extracted from chat response, trying novel writing endpoint...');
+          
+          // Try the novel writing endpoint
+          setAutoPilotStatus('novel');
+          const novelResponse = await apiService.post('/novel/write', {
+            message: promptText,
+            model: selectedModel,
+            template: 'plot-structure'
+          });
+          
+          console.log('📊 Novel writing response:', novelResponse);
+          
+          if (novelResponse && novelResponse.response) {
+            newContent = novelResponse.response;
+            console.log('Content extracted from novel writing endpoint');
+          }
+        }
+        
+        // If we still don't have content, try direct OpenRouter API
+        if (!newContent || !newContent.trim()) {
+          console.log('Still no content, trying direct OpenRouter API...');
+          
+          // Try direct OpenRouter API call
+          setAutoPilotStatus('direct');
+          
+          // Get API key from localStorage
+          const apiKey = localStorage.getItem('openrouter_api_key');
+          
+          if (!apiKey) {
+            console.error('No OpenRouter API key found in localStorage');
+            throw new Error('OpenRouter API key is required for direct API calls. Please set your API key in the settings.');
+          }
+          
+          const directResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + apiKey,
+              'HTTP-Referer': window.location.origin,
+              'X-Title': 'OpenHands Novel Writer'
+            },
+            body: JSON.stringify({
+              model: selectedModel || 'anthropic/claude-3.5-sonnet',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a creative writing assistant specializing in novel writing.'
+                },
+                {
+                  role: 'user',
+                  content: promptText
+                }
+              ],
+              max_tokens: 600,
+              temperature: 0.8
+            })
+          });
+          
+          if (directResponse.ok) {
+            const directData = await directResponse.json();
+            console.log('📊 Direct OpenRouter response:', directData);
+            
+            if (directData.choices && directData.choices.length > 0) {
+              newContent = directData.choices[0].message.content;
+              console.log('Content extracted from direct OpenRouter API');
+            }
+          } else {
+            const errorText = await directResponse.text();
+            console.error('Direct OpenRouter API call failed:', directResponse.status, errorText);
+            throw new Error(`Direct OpenRouter API call failed: ${directResponse.status} ${errorText}`);
+          }
+        }
+        
+        console.log('📄 Final extracted content:', newContent ? newContent.substring(0, 100) + '...' : 'No content');
+        
+        if (newContent && newContent.trim()) {
+          const updatedContent = editorContent ? editorContent + '\n\n' + newContent : newContent;
+          setEditorContent(updatedContent);
+          
+          // Update word count
+          const newWordCount = countWords(updatedContent);
+          setChapterWordCount(newWordCount);
+          
+          // Auto-save
+          saveCurrentChapter(updatedContent, newWordCount);
+          
+          console.log(`✅ Chapter ${currentProject.currentChapterIndex + 1}: ${newWordCount}/2000 words`);
+        } else {
+          console.error('❌ No content could be extracted from any API response');
+          // Create a fallback content to avoid completely failing
+          setAutoPilotStatus('fallback');
+          
+          const fallbackContent = `[Chapter ${currentProject.currentChapterIndex + 1} continues...]
+
+The story continues with more exciting developments. The characters face new challenges and grow through their experiences.
+
+(Auto-pilot temporarily unavailable. Please try again later or continue writing manually.)`;
+          
+          const updatedContent = editorContent ? editorContent + '\n\n' + fallbackContent : fallbackContent;
+          setEditorContent(updatedContent);
+          
+          // Update word count
+          const newWordCount = countWords(updatedContent);
+          setChapterWordCount(newWordCount);
+          
+          // Auto-save
+          saveCurrentChapter(updatedContent, newWordCount);
+        }
+      } catch (apiError) {
+        console.error('API call failed:', apiError);
+        setAutoPilotStatus('fallback');
+        
+        // Create a fallback content to avoid completely failing
+        const fallbackContent = `[Chapter ${currentProject.currentChapterIndex + 1} continues...]
+
+The story continues with more exciting developments. The characters face new challenges and grow through their experiences.
+
+(Auto-pilot temporarily unavailable: ${apiError.message || 'Unknown error'}. Please try again later or continue writing manually.)`;
+        
+        const updatedContent = editorContent ? editorContent + '\n\n' + fallbackContent : fallbackContent;
         setEditorContent(updatedContent);
         
         // Update word count
@@ -432,14 +592,17 @@ Continue writing:`;
         
         // Auto-save
         saveCurrentChapter(updatedContent, newWordCount);
-        
-        console.log(`✅ Chapter ${currentProject.currentChapterIndex + 1}: ${newWordCount}/2000 words`);
       }
     } catch (error) {
       console.error('Auto-pilot writing failed:', error);
+      setAutoPilotStatus('fallback');
       stopAutoPilot();
     } finally {
       setIsGenerating(false);
+      // Reset status after a delay
+      setTimeout(() => {
+        setAutoPilotStatus('idle');
+      }, 3000);
     }
   };
 
@@ -502,7 +665,14 @@ Continue writing:`;
   };
 
   const startAutoPilot = () => {
+    // Check if API key is set for direct API fallback
+    const apiKey = localStorage.getItem('openrouter_api_key');
+    if (!apiKey) {
+      alert('OpenRouter API key is not set. The auto-pilot feature may not work properly if the backend API fails. Please set your API key in the settings.');
+    }
+    
     setAutoPilotMode(true);
+    setAutoPilotStatus('idle');
     
     // Start immediately
     autoPilotWrite();
@@ -513,14 +683,20 @@ Continue writing:`;
     }, autoPilotSpeed * 1000);
     
     setAutoPilotInterval(interval);
+    
+    console.log('🚀 Auto-pilot started with interval:', autoPilotSpeed, 'seconds');
   };
 
   const stopAutoPilot = () => {
     setAutoPilotMode(false);
+    setAutoPilotStatus('idle');
+    
     if (autoPilotInterval) {
       clearInterval(autoPilotInterval);
       setAutoPilotInterval(null);
     }
+    
+    console.log('⏹️ Auto-pilot stopped');
   };
 
   const countWords = (text: string) => {
@@ -1387,7 +1563,10 @@ Continue writing:`;
                         <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-purple-300 font-medium">🤖 Smart Auto-Pilot</h4>
-                            <div className={`w-2 h-2 rounded-full ${autoPilotMode ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
+                            <div className="flex items-center gap-2">
+                              <ApiKeySetup />
+                              <div className={`w-2 h-2 rounded-full ${autoPilotMode ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
+                            </div>
                           </div>
                           <p className="text-gray-300 text-xs mb-3">
                             AI writes complete chapters (1800-2000 words) automatically. Creates new chapters when current one is complete!
@@ -1448,6 +1627,19 @@ Continue writing:`;
                                 <div className="text-gray-400 text-xs">
                                   Writing every {autoPilotSpeed} seconds...
                                 </div>
+                                {autoPilotStatus !== 'idle' && (
+                                  <div className={`text-xs mt-1 ${
+                                    autoPilotStatus === 'backend' ? 'text-blue-400' : 
+                                    autoPilotStatus === 'direct' ? 'text-green-400' : 
+                                    autoPilotStatus === 'novel' ? 'text-purple-400' : 
+                                    'text-red-400'
+                                  }`}>
+                                    {autoPilotStatus === 'backend' ? '🔄 Using backend API...' : 
+                                     autoPilotStatus === 'direct' ? '🌐 Using direct OpenRouter API...' : 
+                                     autoPilotStatus === 'novel' ? '📝 Using novel writing endpoint...' : 
+                                     '⚠️ Using fallback content...'}
+                                  </div>
+                                )}
                                 {chapterWordCount >= 1800 && (
                                   <div className="text-yellow-400 text-xs mt-1">
                                     ⚡ Completing chapter soon...
