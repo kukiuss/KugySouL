@@ -432,23 +432,30 @@ IMPORTANT:
           cleanedContent = cleanedContent.replace(/^(Here's the continuation|Continuing the story|Here's what happens next)[:.]?\s*/i, '');
           cleanedContent = cleanedContent.replace(/\s*(The story continues|To be continued)\.?\s*$/i, '');
           
-          // Check if the new content is too similar to existing content (simple check)
+          // Check if the new content is too similar to existing content (improved check)
           const existingWords = editorContent.toLowerCase().split(/\s+/);
           const newWords = cleanedContent.toLowerCase().split(/\s+/);
-          const similarityThreshold = 0.7;
           
-          // Count overlapping words
+          // Common words to ignore in similarity check
+          const commonWords = ['dan', 'yang', 'di', 'ke', 'dari', 'untuk', 'dengan', 'pada', 'dalam', 'adalah', 'akan', 'telah', 'sudah', 'masih', 'juga', 'atau', 'tetapi', 'namun', 'karena', 'sehingga', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as', 'is', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'will', 'would', 'could', 'should'];
+          
+          // Filter out common words for similarity check
+          const significantExistingWords = existingWords.filter(word => !commonWords.includes(word) && word.length > 2);
+          const significantNewWords = newWords.filter(word => !commonWords.includes(word) && word.length > 2);
+          
+          // Count overlapping significant words
           let overlapCount = 0;
-          for (const word of newWords.slice(0, 20)) { // Check first 20 words
-            if (existingWords.includes(word)) {
+          for (const word of significantNewWords.slice(0, 15)) { // Check first 15 significant words
+            if (significantExistingWords.includes(word)) {
               overlapCount++;
             }
           }
           
-          const similarity = overlapCount / Math.min(20, newWords.length);
+          const similarity = significantNewWords.length > 0 ? overlapCount / Math.min(15, significantNewWords.length) : 0;
+          const similarityThreshold = 0.8; // Increased threshold
           
-          // Only add content if it's not too similar (not a rewrite)
-          if (similarity < similarityThreshold && cleanedContent.length > 50) {
+          // Only add content if it's not too similar (not a rewrite) and has sufficient length
+          if (similarity < similarityThreshold && cleanedContent.length > 30) {
             const updatedContent = editorContent + (editorContent ? '\n\n' : '') + cleanedContent;
             setEditorContent(updatedContent);
             
@@ -480,8 +487,10 @@ IMPORTANT:
             
             // Save to localStorage
             setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+            
+            console.log(`Auto-pilot: Added ${cleanedContent.length} characters, new word count: ${newWordCount}`);
           } else {
-            console.log('Auto-pilot: Skipped similar/repetitive content');
+            console.log(`Auto-pilot: Skipped content - similarity: ${(similarity * 100).toFixed(1)}%, length: ${cleanedContent.length}, threshold: ${(similarityThreshold * 100).toFixed(1)}%`);
           }
         }
       } catch (error) {
