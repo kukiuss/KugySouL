@@ -281,18 +281,19 @@ export default function NovelWriter() {
     
     setIsGenerating(true);
     try {
-      const lastParagraph = editorContent.split('\n\n').slice(-2).join('\n\n');
+      const lastSection = editorContent.split('\n\n').slice(-3).join('\n\n');
       
       const languageInstruction = selectedLanguage === 'indonesian' 
         ? 'Write in Indonesian language (Bahasa Indonesia). '
         : 'Write in English language. ';
 
       const response = await apiService.sendChatMessage({
-        message: `You are a ${selectedGenre} novel writing assistant. ${languageInstruction}Continue this story naturally from where it left off:
+        message: `You are a ${selectedGenre} novel writing assistant. ${languageInstruction}CONTINUE this story naturally from where it left off. DO NOT rewrite or repeat existing content.
 
-"${lastParagraph}"
+Here's what has been written so far:
+"${lastSection}"
 
-Write 4-6 substantial paragraphs (800-1200 words) that flow naturally from the existing text, advance the plot, and maintain the same style and tone.`,
+Write ONLY the NEXT section (4-6 substantial paragraphs, 800-1200 words) that naturally continues from where the story left off, advances the plot, and maintains the same style and tone.`,
         model: selectedModel,
         temperature: 0.7,
         max_tokens: 800
@@ -376,12 +377,20 @@ Provide constructive and actionable suggestions.`,
           const chapterNumber = currentProject.currentChapterIndex + 1;
           promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement. Write approximately 400-600 words for this opening section.`;
         } else {
-          const lastSection = editorContent.split('\n\n').slice(-2).join('\n\n');
+          const lastSection = editorContent.split('\n\n').slice(-3).join('\n\n');
           
           if (isChapterEnding) {
-            promptText = `Continue this ${selectedGenre} chapter and bring it to a satisfying conclusion. ${languageInstruction}Current content: "${lastSection}". Write the FINAL section (${remainingWords} words) that concludes the chapter with a compelling cliffhanger.`;
+            promptText = `CONTINUE and CONCLUDE this ${selectedGenre} chapter. ${languageInstruction}DO NOT rewrite or repeat existing content. Here's what has been written so far:
+
+"${lastSection}"
+
+Write ONLY the FINAL section (${remainingWords} words) that naturally continues from where the story left off and concludes the chapter with a compelling cliffhanger or transition.`;
           } else {
-            promptText = `Continue this ${selectedGenre} chapter naturally. ${languageInstruction}Current content: "${lastSection}". Write the next section (400-600 words) that advances the plot and develops characters further.`;
+            promptText = `CONTINUE this ${selectedGenre} story naturally. ${languageInstruction}DO NOT rewrite or repeat existing content. Here's what has been written so far:
+
+"${lastSection}"
+
+Write ONLY the NEXT section (400-600 words) that naturally continues from where the story left off, advancing the plot and developing characters further.`;
           }
         }
 
@@ -396,6 +405,35 @@ Provide constructive and actionable suggestions.`,
         if (newContent.trim()) {
           const updatedContent = editorContent + (editorContent ? '\n\n' : '') + newContent.trim();
           setEditorContent(updatedContent);
+          
+          // Update word count immediately
+          const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+          setChapterWordCount(newWordCount);
+          
+          // Update the chapter in the project
+          const updatedChapter = {
+            ...currentChapter,
+            content: updatedContent,
+            wordCount: newWordCount,
+            lastModified: new Date()
+          };
+          
+          const updatedProject = {
+            ...currentProject,
+            chapters: currentProject.chapters.map((ch, index) => 
+              index === currentProject.currentChapterIndex ? updatedChapter : ch
+            ),
+            totalWords: currentProject.chapters.reduce((total, ch, index) => 
+              total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
+            ),
+            lastModified: new Date()
+          };
+          
+          setCurrentProject(updatedProject);
+          setCurrentChapter(updatedChapter);
+          
+          // Save to localStorage
+          setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
         }
       } catch (error) {
         console.error('Auto-pilot failed:', error);
@@ -420,6 +458,37 @@ Provide constructive and actionable suggestions.`,
       const updatedContent = editorContent + (editorContent ? '\n\n' : '') + generatedContent.trim();
       setEditorContent(updatedContent);
       setGeneratedContent('');
+      
+      // Update word count immediately
+      const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+      setChapterWordCount(newWordCount);
+      
+      // Update the chapter in the project
+      if (currentProject && currentChapter) {
+        const updatedChapter = {
+          ...currentChapter,
+          content: updatedContent,
+          wordCount: newWordCount,
+          lastModified: new Date()
+        };
+        
+        const updatedProject = {
+          ...currentProject,
+          chapters: currentProject.chapters.map((ch, index) => 
+            index === currentProject.currentChapterIndex ? updatedChapter : ch
+          ),
+          totalWords: currentProject.chapters.reduce((total, ch, index) => 
+            total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
+          ),
+          lastModified: new Date()
+        };
+        
+        setCurrentProject(updatedProject);
+        setCurrentChapter(updatedChapter);
+        
+        // Save to localStorage
+        setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+      }
     }
   };
 
