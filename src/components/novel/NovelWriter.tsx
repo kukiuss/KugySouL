@@ -403,24 +403,33 @@ IMPORTANT:
             const sentences = editorContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
             const lastSentence = sentences[sentences.length - 1]?.trim() || '';
             
-            promptText = `You are writing a ${selectedGenre} novel. ${languageInstruction}
+            promptText = `SYSTEM: You are a novel continuation AI. Your ONLY job is to ADD NEW CONTENT.
 
-CURRENT CHAPTER PROGRESS: ${wordsSoFar}/2000 words
+CRITICAL MISSION: CONTINUE the story from the exact ending point. DO NOT REWRITE ANYTHING.
 
-STORY CONTEXT:
+CURRENT PROGRESS: ${wordsSoFar}/2000 words (need ${2000 - wordsSoFar} more words)
+
+STORY ENDING POINT:
 "${lastSection}"
 
-LAST SENTENCE: "${lastSentence}"
+EXACT LAST SENTENCE: "${lastSentence}"
 
-TASK: Continue the story IMMEDIATELY from where it left off. Write approximately ${targetWords} words that advance the plot.
+TASK: Write the NEXT ${targetWords} words that happen AFTER this sentence: "${lastSentence}"
 
-CRITICAL RULES:
-- Start writing the NEXT sentence after: "${lastSentence}"
-- Do NOT repeat any existing content
-- Do NOT start with "Chapter" or titles
-- Do NOT rewrite or summarize what already happened
-- Continue the narrative flow seamlessly
-- Focus on new actions, dialogue, or events`;
+ABSOLUTE RULES:
+🚫 DO NOT repeat "${lastSentence}" 
+🚫 DO NOT rewrite any existing content
+🚫 DO NOT start with "Chapter" or "Bab"
+🚫 DO NOT summarize what happened
+🚫 DO NOT change character names
+✅ START with what happens NEXT
+✅ Continue the same scene/action
+✅ Add new dialogue, events, descriptions
+✅ Move the story FORWARD
+
+${languageInstruction}
+
+BEGIN CONTINUATION NOW:`;
           }
         }
 
@@ -462,14 +471,22 @@ CRITICAL RULES:
           const similarity = significantNewWords.length > 0 ? overlapCount / Math.min(15, significantNewWords.length) : 0;
           const similarityThreshold = 0.8; // Increased threshold
           
-          // Re-enabled similarity check with optimized threshold
-          console.log(`Similarity check: ${(similarity * 100).toFixed(1)}% (threshold: ${(similarityThreshold * 100).toFixed(1)}%)`);
-          console.log(`Content length: ${cleanedContent.length} characters`);
+          // COMPLETELY DISABLE similarity check for auto-pilot to prevent content rejection
+          console.log(`🔍 Similarity check: ${(similarity * 100).toFixed(1)}% (threshold: ${(similarityThreshold * 100).toFixed(1)}%)`);
+          console.log(`📝 Content length: ${cleanedContent.length} characters`);
+          console.log(`🤖 Auto-pilot active: ${isAutoPilotActive}`);
           
-          // Only add content if it's not too similar and has sufficient length
-          if (similarity < similarityThreshold && cleanedContent.length > 30) {
-            const updatedContent = editorContent + (editorContent ? '\n\n' : '') + cleanedContent;
+          // For auto-pilot: Accept ALL content to prevent rewriting loops
+          // For manual: Use similarity check
+          const shouldAcceptContent = isAutoPilotActive ? cleanedContent.length > 30 : (similarity < similarityThreshold && cleanedContent.length > 30);
+          
+          if (shouldAcceptContent) {
+            // For auto-pilot: FORCE APPEND to prevent any content loss
+            const separator = editorContent ? '\n\n' : '';
+            const updatedContent = editorContent + separator + cleanedContent;
             setEditorContent(updatedContent);
+            
+            console.log(`✅ Content added! Old: ${editorContent.split(' ').length} words → New: ${updatedContent.split(' ').length} words`);
             
             // Update word count immediately
             const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -502,7 +519,13 @@ CRITICAL RULES:
             
             console.log(`Auto-pilot: Added ${cleanedContent.length} characters, new word count: ${newWordCount}`);
           } else {
-            console.log(`Auto-pilot: Skipped content - similarity: ${(similarity * 100).toFixed(1)}%, length: ${cleanedContent.length}, threshold: ${(similarityThreshold * 100).toFixed(1)}%`);
+            console.log(`❌ Content REJECTED! Similarity: ${(similarity * 100).toFixed(1)}%, Length: ${cleanedContent.length}, Auto-pilot: ${isAutoPilotActive}`);
+            console.log(`🚫 Rejected content preview: "${cleanedContent.substring(0, 100)}..."`);
+            
+            // For auto-pilot, this should NEVER happen now
+            if (isAutoPilotActive) {
+              console.error('🚨 AUTO-PILOT CONTENT REJECTED! This should not happen with new logic!');
+            }
           }
         }
       } catch (error) {
