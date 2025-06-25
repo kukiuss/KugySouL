@@ -399,20 +399,28 @@ IMPORTANT:
 - Advance the plot meaningfully`;
           } else {
             const targetWords = Math.min(500, 2000 - wordsSoFar);
+            // Get last sentence for better continuation
+            const sentences = editorContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            const lastSentence = sentences[sentences.length - 1]?.trim() || '';
+            
             promptText = `You are writing a ${selectedGenre} novel. ${languageInstruction}
 
 CURRENT CHAPTER PROGRESS: ${wordsSoFar}/2000 words
 
-LAST PART OF THE STORY:
+STORY CONTEXT:
 "${lastSection}"
 
-TASK: Continue the story naturally from where it left off. Write approximately ${targetWords} words that advance the plot, develop characters, and maintain narrative momentum.
+LAST SENTENCE: "${lastSentence}"
 
-IMPORTANT: 
-- Continue from the exact point where the story ended
-- Do NOT repeat or rewrite any existing content  
-- Maintain the same writing style and tone
-- Focus on moving the story forward with new events, dialogue, or developments`;
+TASK: Continue the story IMMEDIATELY from where it left off. Write approximately ${targetWords} words that advance the plot.
+
+CRITICAL RULES:
+- Start writing the NEXT sentence after: "${lastSentence}"
+- Do NOT repeat any existing content
+- Do NOT start with "Chapter" or titles
+- Do NOT rewrite or summarize what already happened
+- Continue the narrative flow seamlessly
+- Focus on new actions, dialogue, or events`;
           }
         }
 
@@ -454,8 +462,11 @@ IMPORTANT:
           const similarity = significantNewWords.length > 0 ? overlapCount / Math.min(15, significantNewWords.length) : 0;
           const similarityThreshold = 0.8; // Increased threshold
           
-          // Only add content if it's not too similar (not a rewrite) and has sufficient length
-          if (similarity < similarityThreshold && cleanedContent.length > 30) {
+          // Temporarily disable similarity check for debugging
+          console.log(`Similarity check: ${(similarity * 100).toFixed(1)}% (threshold: ${(similarityThreshold * 100).toFixed(1)}%)`);
+          
+          // Only add content if it has sufficient length (disabled similarity check for now)
+          if (cleanedContent.length > 30) {
             const updatedContent = editorContent + (editorContent ? '\n\n' : '') + cleanedContent;
             setEditorContent(updatedContent);
             
