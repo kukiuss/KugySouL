@@ -1,0 +1,18 @@
+
+> kugysoul-frontend@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.3.4 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://10.2.5.199:3000
+
+ ✓ Starting...
+ ✓ Ready in 1057ms
+ ○ Compiling / ...
+ ✓ Compiled / in 4.1s
+ GET / 200 in 4582ms
+ ○ Compiling /improved-novel-writer ...
+ ✓ Compiled /improved-novel-writer in 1923ms
+ GET /improved-novel-writer 200 in 2087ms
+ ✓ Compiled in 264ms
+ ✓ Compiled in 242ms
