@@ -375,22 +375,44 @@ Provide constructive and actionable suggestions.`,
         if (!editorContent.trim()) {
           // Start a new chapter
           const chapterNumber = currentProject.currentChapterIndex + 1;
-          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement. Write approximately 400-600 words for this opening section.`;
+          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement. Write approximately 500-800 words for this opening section.`;
         } else {
-          const lastSection = editorContent.split('\n\n').slice(-3).join('\n\n');
+          // Get more context for better continuation
+          const contextLength = Math.min(1000, editorContent.length);
+          const lastSection = editorContent.slice(-contextLength);
+          const wordsSoFar = chapterWordCount;
           
           if (isChapterEnding) {
-            promptText = `CONTINUE and CONCLUDE this ${selectedGenre} chapter. ${languageInstruction}DO NOT rewrite or repeat existing content. Here's what has been written so far:
+            promptText = `You are writing a ${selectedGenre} novel. ${languageInstruction}
 
+CURRENT CHAPTER PROGRESS: ${wordsSoFar}/2000 words
+
+LAST PART OF THE STORY:
 "${lastSection}"
 
-Write ONLY the FINAL section (${remainingWords} words) that naturally continues from where the story left off and concludes the chapter with a compelling cliffhanger or transition.`;
+TASK: Write the FINAL section to complete this chapter. Continue naturally from where the story ended. Write approximately ${remainingWords} words to reach the 2000-word chapter goal. End with a compelling cliffhanger or transition to the next chapter.
+
+IMPORTANT: 
+- Continue from the exact point where the story left off
+- Do NOT repeat or rewrite any existing content
+- Maintain the same writing style and tone
+- Advance the plot meaningfully`;
           } else {
-            promptText = `CONTINUE this ${selectedGenre} story naturally. ${languageInstruction}DO NOT rewrite or repeat existing content. Here's what has been written so far:
+            const targetWords = Math.min(500, 2000 - wordsSoFar);
+            promptText = `You are writing a ${selectedGenre} novel. ${languageInstruction}
 
+CURRENT CHAPTER PROGRESS: ${wordsSoFar}/2000 words
+
+LAST PART OF THE STORY:
 "${lastSection}"
 
-Write ONLY the NEXT section (400-600 words) that naturally continues from where the story left off, advancing the plot and developing characters further.`;
+TASK: Continue the story naturally from where it left off. Write approximately ${targetWords} words that advance the plot, develop characters, and maintain narrative momentum.
+
+IMPORTANT: 
+- Continue from the exact point where the story ended
+- Do NOT repeat or rewrite any existing content  
+- Maintain the same writing style and tone
+- Focus on moving the story forward with new events, dialogue, or developments`;
           }
         }
 
@@ -398,42 +420,69 @@ Write ONLY the NEXT section (400-600 words) that naturally continues from where 
           message: promptText,
           model: selectedModel,
           temperature: 0.8,
-          max_tokens: 600
+          max_tokens: 1000
         });
         
         const newContent = response.response || response.message || '';
         if (newContent.trim()) {
-          const updatedContent = editorContent + (editorContent ? '\n\n' : '') + newContent.trim();
-          setEditorContent(updatedContent);
+          // Clean the new content and check for repetition
+          let cleanedContent = newContent.trim();
           
-          // Update word count immediately
-          const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
-          setChapterWordCount(newWordCount);
+          // Remove common AI prefixes/suffixes
+          cleanedContent = cleanedContent.replace(/^(Here's the continuation|Continuing the story|Here's what happens next)[:.]?\s*/i, '');
+          cleanedContent = cleanedContent.replace(/\s*(The story continues|To be continued)\.?\s*$/i, '');
           
-          // Update the chapter in the project
-          const updatedChapter = {
-            ...currentChapter,
-            content: updatedContent,
-            wordCount: newWordCount,
-            lastModified: new Date()
-          };
+          // Check if the new content is too similar to existing content (simple check)
+          const existingWords = editorContent.toLowerCase().split(/\s+/);
+          const newWords = cleanedContent.toLowerCase().split(/\s+/);
+          const similarityThreshold = 0.7;
           
-          const updatedProject = {
-            ...currentProject,
-            chapters: currentProject.chapters.map((ch, index) => 
-              index === currentProject.currentChapterIndex ? updatedChapter : ch
-            ),
-            totalWords: currentProject.chapters.reduce((total, ch, index) => 
-              total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
-            ),
-            lastModified: new Date()
-          };
+          // Count overlapping words
+          let overlapCount = 0;
+          for (const word of newWords.slice(0, 20)) { // Check first 20 words
+            if (existingWords.includes(word)) {
+              overlapCount++;
+            }
+          }
           
-          setCurrentProject(updatedProject);
-          setCurrentChapter(updatedChapter);
+          const similarity = overlapCount / Math.min(20, newWords.length);
           
-          // Save to localStorage
-          setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+          // Only add content if it's not too similar (not a rewrite)
+          if (similarity < similarityThreshold && cleanedContent.length > 50) {
+            const updatedContent = editorContent + (editorContent ? '\n\n' : '') + cleanedContent;
+            setEditorContent(updatedContent);
+            
+            // Update word count immediately
+            const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+            setChapterWordCount(newWordCount);
+            
+            // Update the chapter in the project
+            const updatedChapter = {
+              ...currentChapter,
+              content: updatedContent,
+              wordCount: newWordCount,
+              lastModified: new Date()
+            };
+            
+            const updatedProject = {
+              ...currentProject,
+              chapters: currentProject.chapters.map((ch, index) => 
+                index === currentProject.currentChapterIndex ? updatedChapter : ch
+              ),
+              totalWords: currentProject.chapters.reduce((total, ch, index) => 
+                total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
+              ),
+              lastModified: new Date()
+            };
+            
+            setCurrentProject(updatedProject);
+            setCurrentChapter(updatedChapter);
+            
+            // Save to localStorage
+            setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+          } else {
+            console.log('Auto-pilot: Skipped similar/repetitive content');
+          }
         }
       } catch (error) {
         console.error('Auto-pilot failed:', error);
@@ -694,6 +743,37 @@ Write ONLY the NEXT section (400-600 words) that naturally continues from where 
                 <option value="description">Description</option>
                 <option value="character">Character</option>
                 <option value="plot">Plot</option>
+              </select>
+            </div>
+
+            {/* AI Model Selection */}
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">AI Model</label>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
+                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="openai/gpt-4o">GPT-4o</option>
+                <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</option>
+                <option value="mistralai/mistral-large">Mistral Large</option>
+                <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
+              </select>
+            </div>
+
+            {/* Language Selection */}
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="english">English</option>
+                <option value="indonesian">Bahasa Indonesia</option>
               </select>
             </div>
 
