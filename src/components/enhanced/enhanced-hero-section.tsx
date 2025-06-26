@@ -25,7 +25,12 @@ const EnhancedParticle = ({ index }: { index: number }) => {
   
   return (
     <motion.div
-      className="absolute"
+      className={`absolute w-3 h-3 rounded-full ${
+        index % 4 === 0 ? 'bg-cyan-400/60' :
+        index % 4 === 1 ? 'bg-pink-400/60' :
+        index % 4 === 2 ? 'bg-purple-400/60' :
+        'bg-blue-400/60'
+      } blur-sm shadow-lg`}
       style={{
         left: `${20 + (index * 15) % 80}%`,
         top: `${20 + (index * 20) % 60}%`,
@@ -43,12 +48,6 @@ const EnhancedParticle = ({ index }: { index: number }) => {
         ease: "easeInOut",
         delay: randomDelay
       }}
-      className={`w-3 h-3 rounded-full ${
-        index % 4 === 0 ? 'bg-cyan-400/60' :
-        index % 4 === 1 ? 'bg-pink-400/60' :
-        index % 4 === 2 ? 'bg-purple-400/60' :
-        'bg-blue-400/60'
-      } blur-sm shadow-lg`}
     />
   )
 }
