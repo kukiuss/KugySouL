@@ -54,7 +54,7 @@ const EnhancedParticle = ({ index }: { index: number }) => {
 }
 
 // Floating Tech Icons
-const FloatingIcon = ({ Icon, index }: { Icon: any, index: number }) => {
+const FloatingIcon = ({ Icon, index }: { Icon: React.ComponentType<any>, index: number }) => {
   return (
     <motion.div
       className="absolute"
