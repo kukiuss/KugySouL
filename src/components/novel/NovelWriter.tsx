@@ -433,6 +433,14 @@ BEGIN CONTINUATION NOW:`;
           }
         }
 
+        console.log('🚀 Sending auto-pilot request...', {
+          messageLength: promptText.length,
+          model: selectedModel,
+          maxTokens: 800,
+          backendUrl: 'https://minatoz997-backend66.hf.space/chat/message',
+          promptPreview: promptText.substring(0, 200) + '...'
+        });
+
         const response = await apiService.sendChatMessage({
           message: promptText,
           model: selectedModel,
@@ -440,7 +448,26 @@ BEGIN CONTINUATION NOW:`;
           max_tokens: 800 // Optimized for 500-600 words per cycle (4 cycles to reach 2000 words)
         });
         
+        console.log('📥 Received response:', {
+          status: response.status,
+          responseLength: response.response?.length || 0,
+          messageLength: response.message?.length || 0,
+          fullResponse: response
+        });
+        
         const newContent = response.response || response.message || '';
+        console.log('🔍 AUTO-PILOT: Content extraction result', {
+          hasContent: !!newContent.trim(),
+          contentLength: newContent.length,
+          contentPreview: newContent.substring(0, 200),
+          responseFields: {
+            hasResponse: !!response.response,
+            hasMessage: !!response.message,
+            responseLength: response.response?.length || 0,
+            messageLength: response.message?.length || 0
+          }
+        });
+        
         if (newContent.trim()) {
           // Clean the new content and check for repetition
           let cleanedContent = newContent.trim();
@@ -530,9 +557,20 @@ BEGIN CONTINUATION NOW:`;
               console.error('🚨 AUTO-PILOT CONTENT REJECTED! This should not happen with new logic!');
             }
           }
+        } else {
+          console.log('❌ AUTO-PILOT: No content received from backend!', {
+            responseType: typeof response,
+            responseKeys: Object.keys(response || {}),
+            fullResponse: response
+          });
         }
       } catch (error) {
-        console.error('Auto-pilot failed:', error);
+        console.error('🚨 Auto-pilot failed:', error);
+        console.error('🚨 Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
       } finally {
         setIsGenerating(false);
       }
