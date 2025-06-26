@@ -346,7 +346,7 @@ export function EnhancedFooter() {
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 6 }).map((_, i) => (
           <motion.div
-            key={i}
+            key={`footer-bg-${i}`}
             className="absolute opacity-10"
             style={{
               left: `${10 + i * 15}%`,
