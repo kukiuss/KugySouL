@@ -170,7 +170,6 @@ export function EnhancedHeroSection() {
               left: `${15 + (i * 12) % 85}%`,
               top: `${20 + (i * 15) % 60}%`,
             }}
-            animate={{
               x: [0, 100 + i * 10, -50, 80, 0],
               y: [0, -80 - i * 5, 60, -40, 0],
               scale: [1, 1.3, 0.8, 1.1, 1],
