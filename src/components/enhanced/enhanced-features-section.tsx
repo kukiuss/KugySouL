@@ -239,7 +239,7 @@ export function EnhancedFeaturesSection() {
             <Card className="bg-gradient-to-br from-white/80 to-blue-50/50 dark:from-gray-800/80 dark:to-blue-900/20 backdrop-blur-xl border-0 shadow-2xl">
               <CardHeader className="text-center pb-8">
                 <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r ${features[selectedFeature].gradient} mx-auto mb-4 shadow-lg`}>
-                  <features[selectedFeature].icon className="h-8 w-8 text-white" />
+                  {React.createElement(features[selectedFeature].icon, { className: "h-8 w-8 text-white" })}
                 </div>
                 <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   {features[selectedFeature].title}
