@@ -407,7 +407,7 @@ IMPORTANT:
 
 CRITICAL MISSION: CONTINUE the story from the exact ending point. DO NOT REWRITE ANYTHING.
 
-CURRENT PROGRESS: ${wordsSoFar}/2000 words (need ${2000 - wordsSoFar} more words)
+CURRENT PROGRESS: ${wordsSoFar}/2000 words (generating ${targetWords} words this cycle)
 
 STORY ENDING POINT:
 "${lastSection}"
@@ -437,7 +437,7 @@ BEGIN CONTINUATION NOW:`;
           message: promptText,
           model: selectedModel,
           temperature: 0.8,
-          max_tokens: 2000 // Increased from 1000 to 2000 for longer content generation
+          max_tokens: 800 // Optimized for 500-600 words per cycle (4 cycles to reach 2000 words)
         });
         
         const newContent = response.response || response.message || '';
@@ -486,7 +486,10 @@ BEGIN CONTINUATION NOW:`;
             const updatedContent = editorContent + separator + cleanedContent;
             setEditorContent(updatedContent);
             
-            console.log(`✅ Content added! Old: ${editorContent.split(' ').length} words → New: ${updatedContent.split(' ').length} words`);
+            const oldWords = editorContent.split(' ').filter(w => w.trim()).length;
+            const newWords = updatedContent.split(' ').filter(w => w.trim()).length;
+            const addedWords = newWords - oldWords;
+            console.log(`✅ Content added! +${addedWords} words (${oldWords} → ${newWords}) | Progress: ${newWords}/2000 words`);
             
             // Update word count immediately
             const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
