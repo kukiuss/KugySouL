@@ -557,6 +557,12 @@ BEGIN CONTINUATION NOW:`;
               console.error('🚨 AUTO-PILOT CONTENT REJECTED! This should not happen with new logic!');
             }
           }
+        } else {
+          console.log('❌ AUTO-PILOT: No content received from backend!', {
+            responseType: typeof response,
+            responseKeys: Object.keys(response || {}),
+            fullResponse: response
+          });
         }
       } catch (error) {
         console.error('🚨 Auto-pilot failed:', error);
