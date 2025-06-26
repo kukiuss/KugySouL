@@ -213,7 +213,7 @@ export function EnhancedFeaturesSection() {
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {features.slice(0, 6).map((feature, index) => (
               <motion.button
-                key={feature.title}
+                key={`feature-${index}`}
                 className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${
                   selectedFeature === index
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
