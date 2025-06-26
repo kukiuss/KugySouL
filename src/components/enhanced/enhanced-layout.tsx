@@ -39,12 +39,6 @@ export function EnhancedHeader() {
   
   // Halaman yang tidak perlu menampilkan header
   const noHeaderPaths = ['/auth/login', '/survey']
-  
-  // Jika path saat ini adalah halaman utama (root), jangan tampilkan header navigasi
-  // Atau jika path saat ini ada dalam daftar noHeaderPaths, jangan tampilkan header
-  if (pathname === '/' || noHeaderPaths.includes(pathname)) {
-    return null
-  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +47,12 @@ export function EnhancedHeader() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+  
+  // Jika path saat ini adalah halaman utama (root), jangan tampilkan header navigasi
+  // Atau jika path saat ini ada dalam daftar noHeaderPaths, jangan tampilkan header
+  if (pathname === '/' || noHeaderPaths.includes(pathname)) {
+    return null
+  }
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode)
