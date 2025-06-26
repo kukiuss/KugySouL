@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import NovelWriter from '@/components/novel/NovelWriter';
-import NovelWriterPatch from '@/components/novel/NovelWriterPatch';
 
 export default function FixedNovelWriterPage() {
   return (
@@ -19,13 +18,10 @@ export default function FixedNovelWriterPage() {
         </Link>
       </div>
       
-      {/* Apply the patch to fix the auto-pilot feature */}
-      <NovelWriterPatch />
-      
-      {/* Render the original NovelWriter component */}
+      {/* Render the simplified NovelWriter component */}
       <div className="relative">
         <div className="absolute top-0 right-0 bg-green-100 text-green-800 px-2 py-1 text-xs rounded-bl-md z-50">
-          Fixed Auto-Pilot
+          Simplified Novel Writer
         </div>
         <NovelWriter />
       </div>
