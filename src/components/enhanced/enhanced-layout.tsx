@@ -420,7 +420,7 @@ export function EnhancedFooter() {
             viewport={{ once: true }}
             className="flex flex-wrap justify-center gap-6 mb-8"
           >
-            {navigation.slice(0, 4).map((item, index) => (
+            {navigation.slice(0, 4).map((item) => (
               <motion.div
                 key={item.name}
                 whileHover={{ scale: 1.1, y: -2 }}
