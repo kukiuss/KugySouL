@@ -1,29 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   BookOpen, 
-  Pen, 
   Sparkles, 
   Download, 
   Save, 
   Wand2, 
   Brain, 
   Zap, 
-  Trash2, 
-  History, 
   CheckCircle, 
-  AlertCircle, 
   Loader2,
   Play,
   Pause,
-  Plus,
-  FileText,
-  Settings
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { apiService } from '@/services/api';
+import { sendChatMessage } from '@/services/api';
 
 interface NovelChapter {
   id: string;
@@ -113,17 +107,7 @@ export default function NovelWriter() {
     }
   }, [editorContent, currentProject]);
 
-  // Auto-save functionality
-  useEffect(() => {
-    const autoSaveInterval = setInterval(() => {
-      if (currentProject && currentChapter && editorContent !== currentChapter.content) {
-        saveCurrentChapter();
-      }
-    }, 30000); // Auto-save every 30 seconds
-
-    return () => clearInterval(autoSaveInterval);
-  }, [currentProject, currentChapter, editorContent]);
-
+  // Define saveCurrentChapter function first
   const saveCurrentChapter = useCallback(() => {
     if (!currentProject || !currentChapter) return;
 
@@ -159,6 +143,17 @@ export default function NovelWriter() {
 
     setTimeout(() => setIsAutoSaving(false), 1000);
   }, [currentProject, currentChapter, editorContent, chapterWordCount, wordCount, projects]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      if (currentProject && currentChapter && editorContent !== currentChapter.content) {
+        saveCurrentChapter();
+      }
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearInterval(autoSaveInterval);
+  }, [currentProject, currentChapter, editorContent, saveCurrentChapter]);
 
   const createNewProject = () => {
     const firstChapter: NovelChapter = {
@@ -260,14 +255,14 @@ export default function NovelWriter() {
     
     setIsGenerating(true);
     try {
-      const response = await apiService.sendChatMessage({
+      const response = await sendChatMessage({
         message: getPromptByMode(),
         model: selectedModel,
         temperature: 0.8,
-        max_tokens: 800
+        max_tokens: 1500 // Increased to generate 500+ words per request
       });
       
-      setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
+      setGeneratedContent(response.response || 'AI generated content will appear here...');
     } catch (error) {
       console.error('AI generation failed:', error);
       setGeneratedContent('Sorry, AI generation is currently unavailable. Please try again later.');
@@ -287,7 +282,7 @@ export default function NovelWriter() {
         ? 'Write in Indonesian language (Bahasa Indonesia). '
         : 'Write in English language. ';
 
-      const response = await apiService.sendChatMessage({
+      const response = await sendChatMessage({
         message: `You are a ${selectedGenre} novel writing assistant. ${languageInstruction}CONTINUE this story naturally from where it left off. DO NOT rewrite or repeat existing content.
 
 Here's what has been written so far:
@@ -296,10 +291,10 @@ Here's what has been written so far:
 Write ONLY the NEXT section (4-6 substantial paragraphs, 800-1200 words) that naturally continues from where the story left off, advances the plot, and maintains the same style and tone.`,
         model: selectedModel,
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: 1500 // Increased to generate 500+ words per request
       });
       
-      setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
+      setGeneratedContent(response.response || 'AI continuation will appear here...');
     } catch (error) {
       console.error('AI continuation failed:', error);
       setGeneratedContent('Sorry, AI continuation is currently unavailable. Please try again later.');
@@ -317,7 +312,7 @@ Write ONLY the NEXT section (4-6 substantial paragraphs, 800-1200 words) that na
         ? 'Respond in Indonesian language (Bahasa Indonesia). '
         : 'Respond in English language. ';
 
-      const response = await apiService.sendChatMessage({
+      const response = await sendChatMessage({
         message: `You are a professional ${selectedGenre} writing coach. ${languageInstruction}Analyze this text and provide 3-4 specific suggestions for plot development, character development, dialogue improvements, and scene enhancement:
 
 "${editorContent.slice(-500)}"
@@ -328,7 +323,7 @@ Provide constructive and actionable suggestions.`,
         max_tokens: 600
       });
       
-      setAiSuggestions(response.response || response.message || 'AI suggestions will appear here...');
+      setAiSuggestions(response.response || 'AI suggestions will appear here...');
     } catch (error) {
       console.error('AI suggestions failed:', error);
       setAiSuggestions('Sorry, AI suggestions are currently unavailable. Please try again later.');
@@ -340,11 +335,15 @@ Provide constructive and actionable suggestions.`,
   const startAutoPilot = () => {
     if (autoPilotInterval) return;
     
+    console.log("🚀 Starting Auto-Pilot mode with enhanced word generation");
+    console.log("🚀 Starting Auto-Pilot mode with enhanced word generation");
     setAutoPilotMode(true);
     const interval = setInterval(async () => {
       if (!currentProject || !currentChapter || isGenerating) return;
       
+        console.log("✅ Chapter complete! Word count:", chapterWordCount);
       // Check if current chapter is complete (2000+ words)
+        console.log("✅ Chapter complete! Word count:", chapterWordCount);
       if (chapterWordCount >= 2000) {
         // Mark chapter as complete and create new one
         const updatedChapter = { ...currentChapter, isComplete: true, completedAt: new Date() };
@@ -354,8 +353,10 @@ Provide constructive and actionable suggestions.`,
             index === currentProject.currentChapterIndex ? updatedChapter : ch
           )
         };
+      console.log("📊 Current chapter word count:", chapterWordCount, "/ 2000 words");
         setCurrentProject(updatedProject);
         setCurrentChapter(updatedChapter);
+      console.log("📊 Current chapter word count:", chapterWordCount, "/ 2000 words");
         addNewChapter();
         return;
       }
@@ -375,7 +376,11 @@ Provide constructive and actionable suggestions.`,
         if (!editorContent.trim()) {
           // Start a new chapter
           const chapterNumber = currentProject.currentChapterIndex + 1;
-          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement. Write approximately 500-800 words for this opening section.`;
+          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement.
+
+IMPORTANT: Write AT LEAST 500-800 words for this opening section. Be detailed and descriptive. The goal is to generate substantial content with each request.
+
+WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.`;
         } else {
           // Get more context for better continuation
           const contextLength = Math.min(1000, editorContent.length);
@@ -396,9 +401,15 @@ IMPORTANT:
 - Continue from the exact point where the story left off
 - Do NOT repeat or rewrite any existing content
 - Maintain the same writing style and tone
-- Advance the plot meaningfully`;
+- Advance the plot meaningfully
+- Write AT LEAST ${remainingWords} words to complete the chapter
+- Be detailed and descriptive to reach the word count goal
+
+WORD COUNT REQUIREMENT: Your response must be at least ${remainingWords} words to complete the chapter properly.`;
           } else {
-            const targetWords = Math.min(500, 2000 - wordsSoFar);
+            // Always target at least 500 words per request, unless we're very close to 2000
+            // Calculate target words (used in logging)
+            Math.min(Math.max(500, Math.ceil((2000 - wordsSoFar) / 2)), 2000 - wordsSoFar);
             // Get last sentence for better continuation
             const sentences = editorContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
             const lastSentence = sentences[sentences.length - 1]?.trim() || '';
@@ -407,14 +418,14 @@ IMPORTANT:
 
 CRITICAL MISSION: CONTINUE the story from the exact ending point. DO NOT REWRITE ANYTHING.
 
-CURRENT PROGRESS: ${wordsSoFar}/2000 words (generating ${targetWords} words this cycle)
+CURRENT PROGRESS: ${wordsSoFar}/2000 words (generating AT LEAST 500 words this cycle)
 
 STORY ENDING POINT:
 "${lastSection}"
 
 EXACT LAST SENTENCE: "${lastSentence}"
 
-TASK: Write the NEXT ${targetWords} words that happen AFTER this sentence: "${lastSentence}"
+TASK: Write the NEXT 500-800 words that happen AFTER this sentence: "${lastSentence}"
 
 ABSOLUTE RULES:
 🚫 DO NOT repeat "${lastSentence}" 
@@ -426,6 +437,11 @@ ABSOLUTE RULES:
 ✅ Continue the same scene/action
 ✅ Add new dialogue, events, descriptions
 ✅ Move the story FORWARD
+
+✅ WRITE AT LEAST 500 WORDS - BE DETAILED AND DESCRIPTIVE
+✅ AIM FOR 500-800 WORDS IN YOUR RESPONSE
+
+WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.
 
 ${languageInstruction}
 
@@ -441,30 +457,26 @@ BEGIN CONTINUATION NOW:`;
           promptPreview: promptText.substring(0, 200) + '...'
         });
 
-        const response = await apiService.sendChatMessage({
+        const response = await sendChatMessage({
           message: promptText,
           model: selectedModel,
           temperature: 0.8,
-          max_tokens: 800 // Optimized for 500-600 words per cycle (4 cycles to reach 2000 words)
+          max_tokens: 1500 // Increased to generate 500+ words per request (2-3 cycles to reach 2000 words)
         });
         
         console.log('📥 Received response:', {
-          status: response.status,
           responseLength: response.response?.length || 0,
-          messageLength: response.message?.length || 0,
           fullResponse: response
         });
         
-        const newContent = response.response || response.message || '';
+        const newContent = response.response || '';
         console.log('🔍 AUTO-PILOT: Content extraction result', {
           hasContent: !!newContent.trim(),
           contentLength: newContent.length,
           contentPreview: newContent.substring(0, 200),
           responseFields: {
             hasResponse: !!response.response,
-            hasMessage: !!response.message,
-            responseLength: response.response?.length || 0,
-            messageLength: response.message?.length || 0
+            responseLength: response.response?.length || 0
           }
         });
         
@@ -501,11 +513,11 @@ BEGIN CONTINUATION NOW:`;
           // COMPLETELY DISABLE similarity check for auto-pilot to prevent content rejection
           console.log(`🔍 Similarity check: ${(similarity * 100).toFixed(1)}% (threshold: ${(similarityThreshold * 100).toFixed(1)}%)`);
           console.log(`📝 Content length: ${cleanedContent.length} characters`);
-          console.log(`🤖 Auto-pilot active: ${isAutoPilotActive}`);
+          console.log(`🤖 Auto-pilot active: ${autoPilotMode}`);
           
           // For auto-pilot: Accept ALL content to prevent rewriting loops
           // For manual: Use similarity check
-          const shouldAcceptContent = isAutoPilotActive ? cleanedContent.length > 30 : (similarity < similarityThreshold && cleanedContent.length > 30);
+          const shouldAcceptContent = autoPilotMode ? cleanedContent.length > 30 : (similarity < similarityThreshold && cleanedContent.length > 30);
           
           if (shouldAcceptContent) {
             // For auto-pilot: FORCE APPEND to prevent any content loss
@@ -549,11 +561,11 @@ BEGIN CONTINUATION NOW:`;
             
             console.log(`Auto-pilot: Added ${cleanedContent.length} characters, new word count: ${newWordCount}`);
           } else {
-            console.log(`❌ Content REJECTED! Similarity: ${(similarity * 100).toFixed(1)}%, Length: ${cleanedContent.length}, Auto-pilot: ${isAutoPilotActive}`);
+            console.log(`❌ Content REJECTED! Similarity: ${(similarity * 100).toFixed(1)}%, Length: ${cleanedContent.length}, Auto-pilot: ${autoPilotMode}`);
             console.log(`🚫 Rejected content preview: "${cleanedContent.substring(0, 100)}..."`);
             
             // For auto-pilot, this should NEVER happen now
-            if (isAutoPilotActive) {
+            if (autoPilotMode) {
               console.error('🚨 AUTO-PILOT CONTENT REJECTED! This should not happen with new logic!');
             }
           }
@@ -566,11 +578,13 @@ BEGIN CONTINUATION NOW:`;
         }
       } catch (error) {
         console.error('🚨 Auto-pilot failed:', error);
-        console.error('🚨 Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
+        if (error instanceof Error) {
+          console.error('🚨 Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+        }
       } finally {
         setIsGenerating(false);
       }
@@ -820,7 +834,7 @@ BEGIN CONTINUATION NOW:`;
               <label className="block text-sm font-medium text-gray-700 mb-1">Mode</label>
               <select
                 value={writingMode}
-                onChange={(e) => setWritingMode(e.target.value as any)}
+                onChange={(e) => setWritingMode(e.target.value as 'story' | 'dialogue' | 'description' | 'character' | 'plot')}
                 className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
               >
                 <option value="story">Story</option>

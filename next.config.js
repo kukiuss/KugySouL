@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    allowedDevOrigins: ['work-1-cpufmkgioehocgnz.prod-runtime.all-hands.dev', 'work-2-cpufmkgioehocgnz.prod-runtime.all-hands.dev'],
-  },
+  // Allow cross-origin requests
+  crossOrigin: 'anonymous',
   async headers() {
     return [
       {
