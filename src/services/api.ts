@@ -1,211 +1,221 @@
-import axios from 'axios'
-import { config, endpoints } from '@/lib/config'
-import type { 
-  ApiConfig, 
-  CreateConversationRequest, 
-  CreateConversationResponse,
-  LoginRequest,
-  LoginResponse,
-  AnalyzeWritingStyleRequest,
-  AnalyzeWritingStyleResponse,
-  GenerateHumanContentRequest,
-  GenerateHumanContentResponse,
-  HumanizeTextRequest,
-  HumanizeTextResponse,
-  CheckAIDetectionRequest,
-  CheckAIDetectionResponse
-} from '@/types'
+import axios from 'axios';
 
-// Additional interfaces for chat functionality
-interface ChatResponse {
-  response: string  // Backend returns "response", not "message"
-  message?: string  // Fallback for compatibility
-  content?: string  // Additional field for content
-  data?: string     // Additional field for data
-  conversation_id?: string
-  model?: string
-  timestamp?: string
-  status?: string
+// Define types
+// Define message type for chat API (used internally)
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+type ChatRequest = {
+  message: string;
+  model?: string;
+  max_tokens?: number;
+  temperature?: number;
+  system_message?: string;
+  conversation_id?: string;
+};
+
+type ChatResponse = {
+  response: string;
+  model?: string;
   usage?: {
-    prompt_tokens: number
-    completion_tokens: number
-    total_tokens: number
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+};
+
+// Function to count words in a string
+const countWords = (text: string): number => {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+};
+
+// Function to extract content from various response formats
+const extractContent = (response: unknown): string => {
+  // If response is a string, return it directly
+  if (typeof response === 'string') {
+    return response;
   }
-}
-
-interface ChatServiceInfo {
-  name: string
-  version: string
-  description: string
-  status: string
-  endpoints: Record<string, string>
-}
-
-const api = axios.create({
-  baseURL: config.apiBaseUrl,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  // Security configurations
-  withCredentials: false, // Don't send cookies for security
-  maxRedirects: 5,
-  validateStatus: (status) => status < 500, // Accept 4xx as valid responses
-})
-
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`)
+  
+  // If response is an object, check for known properties
+  if (response && typeof response === 'object') {
+    // If response has a 'response' field (our API format)
+    if ('response' in response && typeof (response as any).response === 'string') {
+      return (response as any).response;
     }
     
-    // Add security headers
-    if (config.headers) {
-      config.headers['X-Requested-With'] = 'XMLHttpRequest'
+    // If response has a 'choices' array (OpenAI format)
+    if ('choices' in response && Array.isArray((response as any).choices) && (response as any).choices.length > 0) {
+      const choice = (response as any).choices[0];
+      if (choice.message?.content) {
+        return choice.message.content;
+      }
+      if (choice.text) {
+        return choice.text;
+      }
     }
-    
-    return config
-  },
-  (error) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ API Request Error:', error)
-    }
-    return Promise.reject(error)
   }
-)
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`✅ API Response: ${response.status} ${response.config.url}`)
-    }
-    return response
-  },
-  (error) => {
-    // Only log detailed errors in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ API Response Error:', error.response?.status, error.response?.data)
-    }
-    
-    // Sanitize error for production
-    const sanitizedError = {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-    }
-    
-    return Promise.reject(sanitizedError)
+  
+  // If response is an object, check for 'content' field (some API formats)
+  if (response && typeof response === 'object' && 'content' in response) {
+    return (response as any).content;
   }
-)
+  
+  // If we can't extract content, return empty string
+  console.error('Could not extract content from response:', response);
+  return '';
+};
 
+// Function to send a chat message to the API
+export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
+  const { message, model = 'gpt-3.5-turbo', max_tokens = 1500, temperature = 0.7, system_message } = request;
+  
+  // Add system message to request for better word count control
+  const systemMsg = system_message || "You are a creative writing assistant. Generate detailed, descriptive content with at least 500-800 words per response. Be thorough and elaborate in your writing.";
+  
+  try {
+    // First attempt
+    const response = await axios.post<ChatResponse>('https://minatoz997-backend66.hf.space/chat/message', {
+      message,
+      model,
+      max_tokens,
+      temperature,
+      system_message: systemMsg
+    });
+    
+    let content = extractContent(response.data);
+    let wordCount = countWords(content);
+    
+    // If response is too short (less than 400 words), try again with stronger instructions
+    if (wordCount < 400) {
+      console.log(`First response too short (${wordCount} words). Retrying with stronger instructions...`);
+      
+      const retryResponse = await axios.post<ChatResponse>('https://minatoz997-backend66.hf.space/chat/message', {
+        message: message + "\n\nIMPORTANT: Your previous response was too short. Please provide AT LEAST 500-800 words in your response. Be much more detailed and descriptive.",
+        model,
+        max_tokens: Math.max(max_tokens, 1500), // Ensure we have enough tokens
+        temperature,
+        system_message: "You MUST write at least 500-800 words in your response. Be extremely detailed and descriptive. Elaborate on all points extensively."
+      });
+      
+      content = extractContent(retryResponse.data);
+      wordCount = countWords(content);
+      
+      // If still too short, log warning but return what we have
+      if (wordCount < 400) {
+        console.warn(`Retry still produced short response (${wordCount} words).`);
+      } else {
+        console.log(`Retry successful! Generated ${wordCount} words.`);
+      }
+    } else {
+      console.log(`Generated ${wordCount} words successfully.`);
+    }
+    
+    return { response: content, model };
+  } catch (error) {
+    console.error('Error sending chat message:', error);
+    throw error;
+  }
+};
+
+// Get configuration from the server
+export const getConfig = async () => {
+  try {
+    const response = await axios.get('/api/config');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting config:', error);
+    throw error;
+  }
+};
+
+// Check health of the API
+export const checkHealth = async () => {
+  try {
+    const response = await axios.get('/api/health');
+    return response.data;
+  } catch (error) {
+    console.error('Error checking health:', error);
+    throw error;
+  }
+};
+
+// Create a new conversation
+export const createConversation = async (data: { initial_user_msg: string }) => {
+  try {
+    const response = await axios.post('/api/conversations', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
+};
+
+// Check AI detection
+export const checkAIDetection = async (data: { text: string }) => {
+  try {
+    const response = await axios.post('/api/ai-detection', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking AI detection:', error);
+    throw error;
+  }
+};
+
+// Generate human content
+export const generateHumanContent = async (data: { prompt: string, length: number }) => {
+  try {
+    const response = await axios.post('/api/human-content', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error generating human content:', error);
+    throw error;
+  }
+};
+
+// Login
+export const login = async (data: { email: string, password: string }) => {
+  try {
+    const response = await axios.post('/api/auth/login', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
+  }
+};
+
+// Humanize text
+export const humanizeText = async (data: { ai_text: string }) => {
+  try {
+    const response = await axios.post('/api/humanize', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error humanizing text:', error);
+    throw error;
+  }
+};
+
+// Analyze writing style
+export const analyzeWritingStyle = async (data: { text_samples: string[] }) => {
+  try {
+    const response = await axios.post('/api/analyze-style', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error analyzing writing style:', error);
+    throw error;
+  }
+};
+
+// Export API service for backward compatibility with existing components
 export const apiService = {
-  // Health check
-  async checkHealth(): Promise<string> {
-    const response = await api.get(endpoints.health)
-    return response.data
-  },
-
-  // Get configuration
-  async getConfig(): Promise<ApiConfig> {
-    const response = await api.get(endpoints.config)
-    return response.data
-  },
-
-  // Create conversation
-  async createConversation(data: CreateConversationRequest): Promise<CreateConversationResponse> {
-    const response = await api.post(endpoints.conversations, data)
-    return response.data
-  },
-
-  // User login
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await api.post(endpoints.login, data)
-    return response.data
-  },
-
-  // Analyze writing style
-  async analyzeWritingStyle(data: AnalyzeWritingStyleRequest): Promise<AnalyzeWritingStyleResponse> {
-    const response = await api.post(endpoints.analyzeWritingStyle, data)
-    return response.data
-  },
-
-  // Generate human-like content
-  async generateHumanContent(data: GenerateHumanContentRequest): Promise<GenerateHumanContentResponse> {
-    const response = await api.post(endpoints.generateHumanContent, data)
-    return response.data
-  },
-
-  // Humanize AI-generated text
-  async humanizeText(data: HumanizeTextRequest): Promise<HumanizeTextResponse> {
-    const response = await api.post(endpoints.humanizeText, data)
-    return response.data
-  },
-
-  // Check AI detection risk
-  async checkAIDetection(data: CheckAIDetectionRequest): Promise<CheckAIDetectionResponse> {
-    const response = await api.post(endpoints.checkAIDetection, data)
-    return response.data
-  },
-
-  // Get conversations
-  async getConversations(): Promise<unknown> {
-    const response = await api.get(endpoints.conversations)
-    return response.data
-  },
-
-  // Simple conversation
-  async simpleConversation(data: Record<string, unknown>): Promise<unknown> {
-    const response = await api.post(endpoints.simpleConversation, data)
-    return response.data
-  },
-
-  // Generic GET request
-  async get<T>(url: string): Promise<T> {
-    const response = await api.get(url)
-    return response.data
-  },
-
-  // Generic POST request
-  async post<T>(url: string, data?: unknown): Promise<T> {
-    const response = await api.post(url, data)
-    return response.data
-  },
-
-  // Generic PUT request
-  async put<T>(url: string, data?: unknown): Promise<T> {
-    const response = await api.put(url, data)
-    return response.data
-  },
-
-  // Generic DELETE request
-  async delete<T>(url: string): Promise<T> {
-    const response = await api.delete(url)
-    return response.data
-  },
-
-  // Chat with OpenRouter API
-  async sendChatMessage(data: {
-    message: string
-    conversation_id?: string
-    model?: string
-    api_key?: string
-    stream?: boolean
-    max_tokens?: number
-    temperature?: number
-  }): Promise<ChatResponse> {
-    const response = await api.post(endpoints.chatMessage, data)
-    return response.data
-  },
-
-  // Get chat service info
-  async getChatInfo(): Promise<ChatServiceInfo> {
-    const response = await api.get('/chat/')
-    return response.data
-  },
-}
-
-export default api
+  sendChatMessage,
+  getConfig,
+  checkHealth,
+  createConversation,
+  checkAIDetection,
+  generateHumanContent,
+  login,
+  humanizeText,
+  analyzeWritingStyle
+};

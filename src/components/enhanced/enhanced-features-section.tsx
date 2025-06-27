@@ -307,7 +307,7 @@ export function EnhancedFeaturesSection() {
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full"
                     animate={{
-                      translateX: hoveredCard === index ? '200%' : '-100%',
+                      x: hoveredCard === index ? '200%' : '-100%',
                     }}
                     transition={{ duration: 0.6 }}
                   />

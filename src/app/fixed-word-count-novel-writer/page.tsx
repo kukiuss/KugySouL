@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import NovelWriter from '@/components/novel/NovelWriter';
+import SimpleNovelWriter from '@/components/novel/SimpleNovelWriter';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -23,7 +23,7 @@ export default function FixedWordCountNovelWriterPage() {
         <div className="absolute top-0 right-0 bg-green-100 text-green-800 px-2 py-1 text-xs rounded-bl-md z-50">
           Simplified Novel Writer
         </div>
-        <NovelWriter />
+        <SimpleNovelWriter />
       </div>
     </div>
   );
