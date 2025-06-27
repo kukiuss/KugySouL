@@ -266,9 +266,9 @@ export const improvedApiService = {
             return {
               error: {
                 message: 'All API methods failed',
-                backendError: backendError?.message || 'Unknown backend error',
-                novelError: novelError?.message || 'Unknown novel endpoint error',
-                directError: directError?.message || 'Unknown direct API error'
+                backendError: backendError instanceof Error ? backendError.message : 'Unknown backend error',
+                novelError: novelError instanceof Error ? novelError.message : 'Unknown novel endpoint error',
+                directError: directError instanceof Error ? directError.message : 'Unknown direct API error'
               },
               debug_info: 'All API methods failed',
               source: 'none'
@@ -280,11 +280,12 @@ export const improvedApiService = {
       console.error('❌ Improved sendChatMessage error:', error)
       
       // Return error response
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         error: {
-          message: error.message || 'Unknown error'
+          message: errorMessage
         },
-        debug_info: `API call failed: ${error.message || 'Unknown error'}`,
+        debug_info: `API call failed: ${errorMessage}`,
         source: 'error'
       }
     }
@@ -297,7 +298,12 @@ export const improvedApiService = {
     direct: ImprovedChatResponse | null,
     working: 'backend' | 'novel' | 'direct' | 'none'
   }> {
-    const results = {
+    const results: {
+      backend: ImprovedChatResponse | null,
+      novel: ImprovedChatResponse | null,
+      direct: ImprovedChatResponse | null,
+      working: 'backend' | 'novel' | 'direct' | 'none'
+    } = {
       backend: null,
       novel: null,
       direct: null,

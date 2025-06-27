@@ -13,8 +13,8 @@ export default function SimpleNovelWriter() {
   const [autoPilotMode, setAutoPilotMode] = useState(false);
   const [autoPilotInterval, setAutoPilotInterval] = useState<NodeJS.Timeout | null>(null);
   const [chapterWordCount, setChapterWordCount] = useState(0);
-  const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo');
-  const [selectedLanguage, setSelectedLanguage] = useState('indonesian');
+  const [selectedModel] = useState('gpt-3.5-turbo');
+  const [selectedLanguage] = useState('indonesian');
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   // Update word count when editor content changes
@@ -80,7 +80,8 @@ IMPORTANT:
 WORD COUNT REQUIREMENT: Your response must be at least ${remainingWords} words to complete the chapter properly.`;
         } else {
           // Always target at least 500 words per request, unless we're very close to 2000
-          const targetWords = Math.min(Math.max(500, Math.ceil((2000 - wordsSoFar) / 2)), 2000 - wordsSoFar);
+          // Calculate target words for this generation cycle
+          Math.min(Math.max(500, Math.ceil((2000 - wordsSoFar) / 2)), 2000 - wordsSoFar);
           // Get last sentence for better continuation
           const sentences = editorContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
           const lastSentence = sentences[sentences.length - 1]?.trim() || '';
