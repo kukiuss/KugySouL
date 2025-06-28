@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils'
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Chat', href: '/chat', icon: MessageSquare },
-  { name: 'Novel Writer', href: '/novel', icon: BookOpen },
+  { name: 'Novel Writer', href: '/novel-writer', icon: BookOpen },
   { name: 'Writing Tools', href: '/writing-tools', icon: Pen },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
