@@ -11,20 +11,8 @@ import {
   Sparkles,
   BookOpen,
   Star,
-  Brain,
-  Orbit,
-  Cpu,
-  Network
+  Brain
 } from 'lucide-react'
-
-// Simple Icon Component
-const SimpleIcon = ({ Icon }: { Icon: React.ComponentType<any> }) => {
-  return (
-    <div className="relative">
-      <Icon className="w-6 h-6 text-cyan-300/80 relative z-10" />
-    </div>
-  )
-}
 
 export function EnhancedHeroSection() {
   const [isLoaded, setIsLoaded] = useState(false)
@@ -34,8 +22,6 @@ export function EnhancedHeroSection() {
     const timer = setTimeout(() => setIsLoaded(true), 300)
     return () => clearTimeout(timer)
   }, [])
-
-  const techIcons = [Cpu, Network, Orbit]
 
   return (
     <section 
