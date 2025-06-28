@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function SurveyPage() {
   const router = useRouter()
@@ -104,7 +105,21 @@ export default function SurveyPage() {
   const isNextDisabled = selectedOptions[currentStep] === undefined
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
+    <div className="min-h-screen flex items-center justify-center relative">
+      {/* Anime Background */}
+      <div className="absolute inset-0">
+        <Image 
+          src="/images/loginpage-bg.png" 
+          alt="Anime Background" 
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+          quality={100}
+        />
+        {/* Overlay to ensure text readability */}
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+      
       {/* Logo */}
       <div className="absolute top-8 left-0 right-0 flex justify-center">
         <motion.div
@@ -113,44 +128,15 @@ export default function SurveyPage() {
           transition={{ duration: 0.6 }}
         >
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-pink-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <span className="text-white font-bold text-xl">K</span>
             </div>
             <span className="text-white text-xl font-bold">KugySouL</span>
           </div>
         </motion.div>
       </div>
-      
-      {/* Cyberpunk Neon Floating Elements */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -100, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-cyan-400/40 to-blue-500/40 rounded-full opacity-60 blur-xl shadow-cyan-400/50 shadow-2xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, -80, 0],
-          y: [0, 120, 0],
-          scale: [1, 0.8, 1],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2
-        }}
-        className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-pink-500/50 to-fuchsia-600/50 rounded-full opacity-70 blur-lg shadow-pink-500/50 shadow-xl"
-      />
 
-      <div className="relative w-full max-w-2xl p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-gray-800/50 shadow-2xl before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-cyan-500/10 before:to-pink-500/10 before:opacity-30 before:blur-xl">
+      <div className="relative w-full max-w-2xl p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-gray-800/50 shadow-2xl before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-indigo-500/10 before:to-purple-500/10 before:opacity-30 before:blur-xl">
         {/* Progress Steps */}
         <div className="flex justify-center mb-8">
           {surveySteps.map((_, index) => (
@@ -158,16 +144,16 @@ export default function SurveyPage() {
               <div 
                 className={`w-3 h-3 rounded-full ${
                   index < currentStep 
-                    ? 'bg-cyan-400' 
+                    ? 'bg-indigo-400' 
                     : index === currentStep 
-                      ? 'bg-pink-500' 
+                      ? 'bg-purple-500' 
                       : 'bg-gray-600'
                 }`}
               />
               {index < surveySteps.length - 1 && (
                 <div 
                   className={`w-16 h-0.5 ${
-                    index < currentStep ? 'bg-cyan-400' : 'bg-gray-600'
+                    index < currentStep ? 'bg-indigo-400' : 'bg-gray-600'
                   }`}
                 />
               )}
@@ -204,18 +190,18 @@ export default function SurveyPage() {
                   onClick={() => handleOptionSelect(currentStep, option)}
                   className={`w-full flex items-center justify-between p-4 rounded-xl border ${
                     selectedOptions[currentStep] === option
-                      ? 'border-cyan-400 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 shadow-md shadow-cyan-500/20'
+                      ? 'border-indigo-400 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 shadow-md shadow-indigo-500/20'
                       : 'border-gray-700 hover:border-gray-500 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-900/50'
                   } transition-all duration-200 relative overflow-hidden group`}
                 >
                   <span className="text-left text-lg text-white relative z-10">{option}</span>
                   {selectedOptions[currentStep] === option ? (
-                    <CheckCircle2 className="w-6 h-6 text-cyan-400 relative z-10" />
+                    <CheckCircle2 className="w-6 h-6 text-indigo-400 relative z-10" />
                   ) : (
                     <div className="w-6 h-6 rounded-full border-2 border-gray-600 group-hover:border-gray-400 transition-colors duration-200 relative z-10"></div>
                   )}
                   {selectedOptions[currentStep] === option && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-cyan-500/5 animate-pulse"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse"></div>
                   )}
                 </button>
               </motion.div>
@@ -233,7 +219,7 @@ export default function SurveyPage() {
             <button
               onClick={handleNext}
               disabled={isNextDisabled || isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-medium rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group"
+              className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group"
             >
               <span className="relative z-10">
                 {currentStep < surveySteps.length - 1 ? 'Next' : 'Finish'}
@@ -246,7 +232,7 @@ export default function SurveyPage() {
                 </svg>
               )}
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-pink-500/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+              <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
             </button>
           </motion.div>
         </motion.div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { LogIn, User, Sparkles } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -29,7 +30,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
+    <div className="min-h-screen flex items-center justify-center relative">
+      {/* Anime Background */}
+      <div className="absolute inset-0">
+        <Image 
+          src="/images/loginpage-bg.png" 
+          alt="Anime Background" 
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+          quality={100}
+        />
+        {/* Overlay to ensure text readability */}
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+      
       {/* Logo */}
       <div className="absolute top-8 left-0 right-0 flex justify-center">
         <motion.div
@@ -38,50 +53,21 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
         >
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-pink-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <span className="text-white font-bold text-xl">K</span>
             </div>
             <span className="text-white text-xl font-bold">KugySouL</span>
           </div>
         </motion.div>
       </div>
-      
-      {/* Cyberpunk Neon Floating Elements */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -100, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-cyan-400/40 to-blue-500/40 rounded-full opacity-60 blur-xl shadow-cyan-400/50 shadow-2xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, -80, 0],
-          y: [0, 120, 0],
-          scale: [1, 0.8, 1],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2
-        }}
-        className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-pink-500/50 to-fuchsia-600/50 rounded-full opacity-70 blur-lg shadow-pink-500/50 shadow-xl"
-      />
 
-      <div className="relative w-full max-w-md p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-gray-800/50 shadow-2xl before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-cyan-500/10 before:to-pink-500/10 before:opacity-30 before:blur-xl">
+      <div className="relative w-full max-w-md p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl border border-gray-800/50 shadow-2xl before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-indigo-500/10 before:to-purple-500/10 before:opacity-30 before:blur-xl">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-full shadow-lg shadow-cyan-500/30"
+            className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-lg shadow-indigo-500/30"
           >
             <LogIn className="w-8 h-8 text-white" />
           </motion.div>
@@ -120,7 +106,7 @@ export default function LoginPage() {
               onClick={handleGoogleLogin}
               disabled={true}
               className={`w-full flex items-center justify-center gap-3 py-4 px-4 bg-white hover:bg-gray-100 text-gray-900 font-medium rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group ${
-                selectedOption === 'google' ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 border-2 border-blue-500/50 text-white' : ''
+                selectedOption === 'google' ? 'bg-gradient-to-r from-indigo-500/20 to-purple-600/20 border-2 border-indigo-500/50 text-white' : ''
               }`}
             >
               <div className="flex items-center justify-center">
@@ -147,8 +133,8 @@ export default function LoginPage() {
             <button
               onClick={handleGuestLogin}
               disabled={isLoading}
-              className={`w-full flex items-center justify-center gap-3 py-4 px-4 bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-white font-medium rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group ${
-                selectedOption === 'guest' ? 'from-pink-500/80 to-purple-600/80 border-2 border-pink-500/50' : ''
+              className={`w-full flex items-center justify-center gap-3 py-4 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group ${
+                selectedOption === 'guest' ? 'from-indigo-500/80 to-purple-600/80 border-2 border-indigo-500/50' : ''
               }`}
             >
               <User className="w-5 h-5" />
@@ -164,7 +150,7 @@ export default function LoginPage() {
             animate={{ opacity: 1 }}
             className="mt-6 flex justify-center"
           >
-            <div className="flex items-center space-x-2 text-cyan-400">
+            <div className="flex items-center space-x-2 text-indigo-400">
               <Sparkles className="w-5 h-5 animate-pulse" />
               <span>
                 {selectedOption === 'google' 
