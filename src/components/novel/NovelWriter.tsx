@@ -386,13 +386,30 @@ Provide constructive and actionable suggestions.`,
         let promptText = '';
         
         if (!editorContent.trim()) {
-          // Start a new chapter
+          // Start a new chapter - but continue from previous chapter if available
           const chapterNumber = currentProject.currentChapterIndex + 1;
-          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement.
+          const previousChapter = currentProject.chapters[currentProject.currentChapterIndex - 1];
+          const previousContext = previousChapter?.content ? previousChapter.content.slice(-500) : '';
+          
+          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}
 
-IMPORTANT: Write AT LEAST 500-800 words for this opening section. Be detailed and descriptive. The goal is to generate substantial content with each request.
+${previousContext ? `PREVIOUS CHAPTER ENDING:
+"${previousContext}"
 
-WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.`;
+TASK: Write Chapter ${chapterNumber} that CONTINUES naturally from the previous chapter. DO NOT restart the story. Continue with the same characters and plot.` : `TASK: Write the BEGINNING of Chapter ${chapterNumber} of a ${selectedGenre} novel.`}
+
+REQUIREMENTS:
+- Write AT LEAST 500-800 words
+- ${previousContext ? 'Continue the same story and characters' : 'Create an engaging opening with character development'}
+- Be detailed and descriptive
+- Advance the plot meaningfully
+- ${previousContext ? 'DO NOT create a completely new opening scene' : 'Establish the setting and characters'}
+
+WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.
+
+${languageInstruction}
+
+BEGIN CHAPTER ${chapterNumber}:`;
         } else {
           // Get more context for better continuation
           const contextLength = Math.min(1000, editorContent.length);
@@ -426,38 +443,40 @@ WORD COUNT REQUIREMENT: Your response must be at least ${remainingWords} words t
             const sentences = editorContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
             const lastSentence = sentences[sentences.length - 1]?.trim() || '';
             
-            promptText = `SYSTEM: You are a novel continuation AI. Your ONLY job is to ADD NEW CONTENT.
+            promptText = `SYSTEM: You are a STORY CONTINUATION AI. Your ONLY job is to CONTINUE the existing story.
 
-CRITICAL MISSION: CONTINUE the story from the exact ending point. DO NOT REWRITE ANYTHING.
+🚨 CRITICAL MISSION: CONTINUE the story from where it left off. DO NOT START A NEW STORY.
 
 CURRENT PROGRESS: ${wordsSoFar}/2000 words (generating AT LEAST 500 words this cycle)
 
-STORY ENDING POINT:
+EXISTING STORY CONTEXT:
 "${lastSection}"
 
 EXACT LAST SENTENCE: "${lastSentence}"
 
-TASK: Write the NEXT 500-800 words that happen AFTER this sentence: "${lastSentence}"
+🎯 YOUR TASK: Write the NEXT 500-800 words that happen IMMEDIATELY AFTER: "${lastSentence}"
 
-ABSOLUTE RULES:
-🚫 DO NOT repeat "${lastSentence}" 
-🚫 DO NOT rewrite any existing content
-🚫 DO NOT start with "Chapter" or "Bab"
-🚫 DO NOT summarize what happened
-🚫 DO NOT change character names
-✅ START with what happens NEXT
-✅ Continue the same scene/action
-✅ Add new dialogue, events, descriptions
-✅ Move the story FORWARD
+🚫 FORBIDDEN ACTIONS:
+- DO NOT repeat "${lastSentence}"
+- DO NOT rewrite any existing content  
+- DO NOT start with "Chapter", "Bab", "The story begins", "Once upon a time"
+- DO NOT introduce new main characters without context
+- DO NOT change the setting suddenly
+- DO NOT summarize what already happened
+- DO NOT create opening scenes (no "wind howled", "sun rose", etc. unless it continues the scene)
+- DO NOT start with scene-setting descriptions unless they continue the current scene
 
-✅ WRITE AT LEAST 500 WORDS - BE DETAILED AND DESCRIPTIVE
-✅ AIM FOR 500-800 WORDS IN YOUR RESPONSE
+✅ REQUIRED ACTIONS:
+- START immediately with action/dialogue/continuation
+- Keep the SAME characters from the last section
+- Continue the SAME scene or naturally transition
+- Add new dialogue, events, descriptions that ADVANCE the plot
+- Maintain the SAME writing style and tone
+- Write in ${selectedLanguage === 'indonesian' ? 'Indonesian (Bahasa Indonesia)' : 'English'}
 
-WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.
+✅ WORD COUNT: Write AT LEAST 500 words. Be detailed and descriptive.
 
-${languageInstruction}
-
-BEGIN CONTINUATION NOW:`;
+🎬 BEGIN CONTINUATION IMMEDIATELY (no introductions, just continue the story):`;
           }
         }
 
@@ -496,9 +515,19 @@ BEGIN CONTINUATION NOW:`;
           // Clean the new content and check for repetition
           let cleanedContent = newContent.trim();
           
-          // Remove common AI prefixes/suffixes
-          cleanedContent = cleanedContent.replace(/^(Here's the continuation|Continuing the story|Here's what happens next)[:.]?\s*/i, '');
-          cleanedContent = cleanedContent.replace(/\s*(The story continues|To be continued)\.?\s*$/i, '');
+          // Remove common AI prefixes/suffixes and opening phrases
+          cleanedContent = cleanedContent.replace(/^(Here's the continuation|Continuing the story|Here's what happens next|The story continues|Chapter \d+|Bab \d+)[:.]?\s*/i, '');
+          cleanedContent = cleanedContent.replace(/^(The wind howled|The sun rose|The air hung|The forest was|Once upon a time|In a land|Long ago|The day began|Dawn broke|The morning|The evening).*?\.\s*/i, '');
+          cleanedContent = cleanedContent.replace(/^(It was a|There was a|The world was|In the|On this day|That morning|That evening).*?\.\s*/i, '');
+          cleanedContent = cleanedContent.replace(/\s*(The story continues|To be continued|End of chapter)\.?\s*$/i, '');
+          
+          // Remove repetitive opening patterns that AI often uses
+          cleanedContent = cleanedContent.replace(/^.*?(Meanwhile|Suddenly|Then|Next|After that|Later|Soon),?\s*/i, '');
+          
+          console.log(`🧹 Content cleaning:
+            Original length: ${newContent.length}
+            Cleaned length: ${cleanedContent.length}
+            Removed: ${newContent.length - cleanedContent.length} characters`);
           
           // Check if the new content is too similar to existing content (improved check)
           const existingWords = editorContent.toLowerCase().split(/\s+/);
