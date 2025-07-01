@@ -130,19 +130,27 @@ export default function NovelWriter() {
 
     setCurrentChapter(updatedChapter);
     setCurrentProject(updatedProject);
-    setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+    
+    // Use functional update for projects to prevent race conditions
+    setProjects(prevProjects => 
+      prevProjects.map(p => p.id === currentProject.id ? updatedProject : p)
+    );
     setLastSaved(new Date());
 
     // Save to localStorage
     try {
-      const projectsToSave = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
-      localStorage.setItem('novel_projects', JSON.stringify(projectsToSave));
+      // Use the updated project directly instead of relying on projects state
+      setProjects(currentProjects => {
+        const projectsToSave = currentProjects.map(p => p.id === updatedProject.id ? updatedProject : p);
+        localStorage.setItem('novel_projects', JSON.stringify(projectsToSave));
+        return currentProjects; // Return unchanged since we're just saving
+      });
     } catch (error) {
       console.error('Failed to save to localStorage:', error);
     }
 
     setTimeout(() => setIsAutoSaving(false), 1000);
-  }, [currentProject, currentChapter, editorContent, chapterWordCount, wordCount, projects]);
+  }, [currentProject, currentChapter, editorContent, chapterWordCount, wordCount]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -335,8 +343,12 @@ Provide constructive and actionable suggestions.`,
   const startAutoPilot = () => {
     if (autoPilotInterval) return;
     
+    // CRITICAL: Save current content before starting autopilot to prevent data loss
     console.log("🚀 Starting Auto-Pilot mode with enhanced word generation");
-    console.log("🚀 Starting Auto-Pilot mode with enhanced word generation");
+    console.log("💾 Saving current content before starting autopilot...");
+    saveCurrentChapter();
+    
+    console.log("🚀 Auto-Pilot mode activated with content preservation");
     setAutoPilotMode(true);
     const interval = setInterval(async () => {
       if (!currentProject || !currentChapter || isGenerating) return;
@@ -520,46 +532,65 @@ BEGIN CONTINUATION NOW:`;
           const shouldAcceptContent = autoPilotMode ? cleanedContent.length > 30 : (similarity < similarityThreshold && cleanedContent.length > 30);
           
           if (shouldAcceptContent) {
-            // For auto-pilot: FORCE APPEND to prevent any content loss
-            const separator = editorContent ? '\n\n' : '';
-            const updatedContent = editorContent + separator + cleanedContent;
-            setEditorContent(updatedContent);
-            
-            const oldWords = editorContent.split(' ').filter(w => w.trim()).length;
-            const newWords = updatedContent.split(' ').filter(w => w.trim()).length;
-            const addedWords = newWords - oldWords;
-            console.log(`✅ Content added! +${addedWords} words (${oldWords} → ${newWords}) | Progress: ${newWords}/2000 words`);
-            
-            // Update word count immediately
-            const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
-            setChapterWordCount(newWordCount);
-            
-            // Update the chapter in the project
-            const updatedChapter = {
-              ...currentChapter,
-              content: updatedContent,
-              wordCount: newWordCount,
-              lastModified: new Date()
-            };
-            
-            const updatedProject = {
-              ...currentProject,
-              chapters: currentProject.chapters.map((ch, index) => 
-                index === currentProject.currentChapterIndex ? updatedChapter : ch
-              ),
-              totalWords: currentProject.chapters.reduce((total, ch, index) => 
-                total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
-              ),
-              lastModified: new Date()
-            };
-            
-            setCurrentProject(updatedProject);
-            setCurrentChapter(updatedChapter);
-            
-            // Save to localStorage
-            setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
-            
-            console.log(`Auto-pilot: Added ${cleanedContent.length} characters, new word count: ${newWordCount}`);
+            // CRITICAL FIX: Use functional update to prevent race conditions and content loss
+            setEditorContent(prevContent => {
+              // Always use the most current content to prevent data loss
+              const currentContent = prevContent || currentChapter?.content || '';
+              const separator = currentContent ? '\n\n' : '';
+              const updatedContent = currentContent + separator + cleanedContent;
+              
+              console.log(`🔄 AUTOPILOT CONTENT UPDATE:
+                📊 Previous content: ${currentContent.length} chars (${currentContent.split(' ').filter(w => w.trim()).length} words)
+                ➕ Adding content: ${cleanedContent.length} chars (${cleanedContent.split(' ').filter(w => w.trim()).length} words)
+                📈 Final content: ${updatedContent.length} chars (${updatedContent.split(' ').filter(w => w.trim()).length} words)`);
+              
+              // Immediate word count calculation for logging
+              const oldWords = currentContent.split(' ').filter(w => w.trim()).length;
+              const newWords = updatedContent.split(' ').filter(w => w.trim()).length;
+              const addedWords = newWords - oldWords;
+              console.log(`✅ Content successfully appended! +${addedWords} words (${oldWords} → ${newWords}) | Progress: ${newWords}/2000 words`);
+              
+              return updatedContent;
+            });
+
+            // Use a callback to ensure we get the updated content
+            setTimeout(() => {
+              setEditorContent(currentContent => {
+                const newWordCount = currentContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+                setChapterWordCount(newWordCount);
+
+                // Update the chapter in the project with the latest content
+                const updatedChapter = {
+                  ...currentChapter,
+                  content: currentContent,
+                  wordCount: newWordCount,
+                  lastModified: new Date()
+                };
+
+                const updatedProject = {
+                  ...currentProject,
+                  chapters: currentProject.chapters.map((ch, index) => 
+                    index === currentProject.currentChapterIndex ? updatedChapter : ch
+                  ),
+                  totalWords: currentProject.chapters.reduce((total, ch, index) => 
+                    total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
+                  ),
+                  lastModified: new Date()
+                };
+
+                setCurrentProject(updatedProject);
+                setCurrentChapter(updatedChapter);
+
+                // Save to localStorage with functional update to prevent race conditions
+                setProjects(prevProjects => 
+                  prevProjects.map(p => p.id === currentProject.id ? updatedProject : p)
+                );
+
+                console.log(`✅ Auto-pilot: Successfully saved ${cleanedContent.length} characters, final word count: ${newWordCount}`);
+                
+                return currentContent; // Return the same content since we're just updating other states
+              });
+            }, 50); // Small delay to ensure state consistency
           } else {
             console.log(`❌ Content REJECTED! Similarity: ${(similarity * 100).toFixed(1)}%, Length: ${cleanedContent.length}, Auto-pilot: ${autoPilotMode}`);
             console.log(`🚫 Rejected content preview: "${cleanedContent.substring(0, 100)}..."`);
@@ -603,40 +634,59 @@ BEGIN CONTINUATION NOW:`;
 
   const insertGeneratedContent = () => {
     if (generatedContent.trim()) {
-      const updatedContent = editorContent + (editorContent ? '\n\n' : '') + generatedContent.trim();
-      setEditorContent(updatedContent);
+      // Use functional update to prevent race conditions
+      setEditorContent(prevContent => {
+        const currentContent = prevContent || currentChapter?.content || '';
+        const updatedContent = currentContent + (currentContent ? '\n\n' : '') + generatedContent.trim();
+        
+        console.log(`📝 Manual content insertion:
+          Previous: ${currentContent.length} chars
+          Adding: ${generatedContent.trim().length} chars
+          Final: ${updatedContent.length} chars`);
+        
+        return updatedContent;
+      });
+      
       setGeneratedContent('');
       
-      // Update word count immediately
-      const newWordCount = updatedContent.trim().split(/\s+/).filter(word => word.length > 0).length;
-      setChapterWordCount(newWordCount);
-      
-      // Update the chapter in the project
-      if (currentProject && currentChapter) {
-        const updatedChapter = {
-          ...currentChapter,
-          content: updatedContent,
-          wordCount: newWordCount,
-          lastModified: new Date()
-        };
-        
-        const updatedProject = {
-          ...currentProject,
-          chapters: currentProject.chapters.map((ch, index) => 
-            index === currentProject.currentChapterIndex ? updatedChapter : ch
-          ),
-          totalWords: currentProject.chapters.reduce((total, ch, index) => 
-            total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
-          ),
-          lastModified: new Date()
-        };
-        
-        setCurrentProject(updatedProject);
-        setCurrentChapter(updatedChapter);
-        
-        // Save to localStorage
-        setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
-      }
+      // Use setTimeout to ensure state has updated
+      setTimeout(() => {
+        setEditorContent(currentContent => {
+          const newWordCount = currentContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+          setChapterWordCount(newWordCount);
+          
+          // Update the chapter in the project
+          if (currentProject && currentChapter) {
+            const updatedChapter = {
+              ...currentChapter,
+              content: currentContent,
+              wordCount: newWordCount,
+              lastModified: new Date()
+            };
+            
+            const updatedProject = {
+              ...currentProject,
+              chapters: currentProject.chapters.map((ch, index) => 
+                index === currentProject.currentChapterIndex ? updatedChapter : ch
+              ),
+              totalWords: currentProject.chapters.reduce((total, ch, index) => 
+                total + (index === currentProject.currentChapterIndex ? newWordCount : ch.wordCount), 0
+              ),
+              lastModified: new Date()
+            };
+            
+            setCurrentProject(updatedProject);
+            setCurrentChapter(updatedChapter);
+            
+            // Save to localStorage with functional update
+            setProjects(prevProjects => 
+              prevProjects.map(p => p.id === currentProject.id ? updatedProject : p)
+            );
+          }
+          
+          return currentContent;
+        });
+      }, 50);
     }
   };
 
