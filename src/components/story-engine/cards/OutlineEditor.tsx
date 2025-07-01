@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Edit, Trash2, BookOpen, ChevronDown, ChevronRight, FileText, Sparkles } from 'lucide-react';
+
+import { Plus, Edit, Trash2, BookOpen, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 
 interface OutlineEditorProps {
   outline: OutlineStructure;
@@ -162,7 +162,7 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
     setExpandedParts(newExpanded);
   };
 
-  const generateChapterIdeas = (chapter: ChapterCard) => {
+  const generateChapterIdeas = () => {
     // Simulate AI generation
     const ideas = [
       'Perkenalan karakter utama dalam situasi normal',
@@ -248,113 +248,109 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
             
             return (
               <Card key={part.id}>
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <CardHeader 
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => togglePartExpansion(part.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                          <div>
-                            <CardTitle className="text-lg">
-                              BABAK {partIndex + 1}: {part.title}
-                            </CardTitle>
-                            <CardDescription>{part.description}</CardDescription>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">
-                            {part.chapters.length} chapters
-                          </Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditPart(part);
-                            }}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeletePart(part.id);
-                            }}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                <CardHeader 
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => togglePartExpansion(part.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                      <div>
+                        <CardTitle className="text-lg">
+                          BABAK {partIndex + 1}: {part.title}
+                        </CardTitle>
+                        <CardDescription>{part.description}</CardDescription>
                       </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <CardContent className="pt-0">
-                      {/* Chapters */}
-                      <div className="space-y-3">
-                        {part.chapters.map((chapter, chapterIndex) => (
-                          <Card key={chapter.id} className="bg-gray-50">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{chapter.title}</h4>
-                                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                                    <span>Format: {chapter.format}</span>
-                                    <span>Ideas: {chapter.ideas.length}</span>
-                                    <span>Openings: {chapter.openings.filter(o => o.trim()).length}/3</span>
-                                    {chapter.isComplete && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        Complete
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleEditChapter(chapter)}
-                                  >
-                                    <Edit className="h-3 w-3 mr-1" />
-                                    Edit
-                                  </Button>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleDeleteChapter(part.id, chapter.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {part.chapters.length} chapters
+                      </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditPart(part);
+                        }}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePart(part.id);
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                {isExpanded && (
+                  <CardContent className="pt-0">
+                    {/* Chapters */}
+                    <div className="space-y-3">
+                      {part.chapters.map((chapter) => (
+                        <Card key={chapter.id} className="bg-gray-50">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium">{chapter.title}</h4>
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                                  <span>Format: {chapter.format}</span>
+                                  <span>Ideas: {chapter.ideas.length}</span>
+                                  <span>Openings: {chapter.openings.filter(o => o.trim()).length}/3</span>
+                                  {chapter.isComplete && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Complete
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                        
-                        {/* Add Chapter Button */}
-                        <Button 
-                          variant="outline" 
-                          className="w-full border-dashed"
-                          onClick={() => handleAddChapter(part.id)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Tambah Chapter ke Babak {partIndex + 1}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleEditChapter(chapter)}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleDeleteChapter(part.id, chapter.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {/* Add Chapter Button */}
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-dashed"
+                        onClick={() => handleAddChapter(part.id)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tambah Chapter ke Babak {partIndex + 1}
+                      </Button>
+                    </div>
+                  </CardContent>
+                )}
               </Card>
             );
           })}
@@ -460,7 +456,7 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => generateChapterIdeas(editingChapter)}
+                    onClick={() => generateChapterIdeas()}
                   >
                     <Sparkles className="h-3 w-3 mr-1" />
                     Generate Ideas

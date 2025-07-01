@@ -6,23 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Edit, Play, Pause, RotateCcw, Sparkles, FileText, Users, Globe } from 'lucide-react';
+import { BookOpen, Play, Pause, Sparkles, Users, Globe } from 'lucide-react';
 
 interface StoryWritingProps {
   project: StoryProject;
   onUpdateProject: (project: StoryProject) => void;
 }
 
+type ExtendedChapterCard = ChapterCard & { partTitle: string };
+
 export function StoryWriting({ project, onUpdateProject }: StoryWritingProps) {
-  const [selectedChapter, setSelectedChapter] = useState<ChapterCard | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<ExtendedChapterCard | null>(null);
   const [editorContent, setEditorContent] = useState('');
   const [isAutoPilotMode, setIsAutoPilotMode] = useState(false);
   const [activeTab, setActiveTab] = useState('editor');
 
   // Get all chapters from all parts
-  const allChapters = project.outline.parts.flatMap(part => 
+  const allChapters: ExtendedChapterCard[] = project.outline.parts.flatMap(part => 
     part.chapters.map(chapter => ({
       ...chapter,
       partTitle: part.title

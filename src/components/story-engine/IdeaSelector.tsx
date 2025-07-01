@@ -144,7 +144,7 @@ export function IdeaSelector({ onCreateProject, onBack }: IdeaSelectorProps) {
               </h3>
               <div className="grid md:grid-cols-2 gap-6 text-sm text-gray-600">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Pilih "Belum Memiliki Ide" jika:</h4>
+                  <h4 className="font-medium text-gray-700 mb-1">Pilih &ldquo;Belum Memiliki Ide&rdquo; jika:</h4>
                   <ul className="space-y-1">
                     <li>• Anda benar-benar blank dan butuh inspirasi</li>
                     <li>• Ingin eksplorasi genre yang berbeda</li>
@@ -153,7 +153,7 @@ export function IdeaSelector({ onCreateProject, onBack }: IdeaSelectorProps) {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Pilih "Sudah Memiliki Ide" jika:</h4>
+                  <h4 className="font-medium text-gray-700 mb-1">Pilih &ldquo;Sudah Memiliki Ide&rdquo; jika:</h4>
                   <ul className="space-y-1">
                     <li>• Sudah ada konsep cerita di kepala</li>
                     <li>• Punya karakter atau setting favorit</li>
