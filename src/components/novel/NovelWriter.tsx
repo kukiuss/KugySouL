@@ -193,10 +193,19 @@ export default function NovelWriter() {
     setIsWriting(true);
   };
 
-  const addNewChapter = () => {
+  const addNewChapter = (autoCreated = false) => {
     if (!currentProject) return;
     
     saveCurrentChapter();
+    
+    // Mark previous chapter as complete if auto-created
+    const updatedChapters = autoCreated 
+      ? currentProject.chapters.map((ch, index) => 
+          index === currentProject.currentChapterIndex 
+            ? { ...ch, isComplete: true, completedAt: new Date() }
+            : ch
+        )
+      : currentProject.chapters;
     
     const newChapter: NovelChapter = {
       id: Date.now().toString(),
@@ -209,8 +218,8 @@ export default function NovelWriter() {
 
     const updatedProject = {
       ...currentProject,
-      chapters: [...currentProject.chapters, newChapter],
-      currentChapterIndex: currentProject.chapters.length
+      chapters: [...updatedChapters, newChapter],
+      currentChapterIndex: updatedChapters.length
     };
     
     setCurrentProject(updatedProject);
@@ -218,6 +227,17 @@ export default function NovelWriter() {
     setEditorContent('');
     setChapterWordCount(0);
     setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+    
+    if (autoCreated) {
+      console.log(`🎯 AUTO-CREATED Chapter ${newChapter.title}! Previous chapter completed with 2000+ words.`);
+      
+      // Auto-restart autopilot for the new chapter with continuity
+      setTimeout(() => {
+        console.log(`🚀 AUTO-RESTARTING Autopilot for ${newChapter.title} with story continuity...`);
+        setAutoPilotMode(true);
+        startAutoPilot();
+      }, 2000); // Give time for state to settle
+    }
   };
 
   const switchToChapter = (chapterIndex: number) => {
@@ -386,13 +406,43 @@ Provide constructive and actionable suggestions.`,
         let promptText = '';
         
         if (!editorContent.trim()) {
-          // Start a new chapter
+          // Start a new chapter - but continue from previous chapter if available
           const chapterNumber = currentProject.currentChapterIndex + 1;
-          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}Write the BEGINNING of Chapter ${chapterNumber}. Create an engaging opening with vivid descriptions, character development, and plot advancement.
+          const previousChapter = currentProject.chapters[currentProject.currentChapterIndex - 1];
+          const previousContext = previousChapter?.content ? previousChapter.content.slice(-800) : '';
+          
+          promptText = `You are an expert ${selectedGenre} novelist. ${languageInstruction}
 
-IMPORTANT: Write AT LEAST 500-800 words for this opening section. Be detailed and descriptive. The goal is to generate substantial content with each request.
+${previousContext ? `PREVIOUS CHAPTER ENDING:
+"${previousContext}"
 
-WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.`;
+🎯 CRITICAL TASK: Write Chapter ${chapterNumber} that CONTINUES SEAMLESSLY from the previous chapter. 
+
+ABSOLUTE REQUIREMENTS:
+- SAME CHARACTERS: Continue with the exact same characters from previous chapter
+- SAME PLOT: Continue the same storyline and conflicts  
+- SAME SETTING: Maintain story world consistency
+- NATURAL TRANSITION: Chapter ${chapterNumber} should feel like a natural continuation
+- NO RESET: Do NOT restart the story or introduce completely new elements
+
+FORBIDDEN:
+- Do NOT create new main characters without context
+- Do NOT change the genre or tone suddenly  
+- Do NOT start with generic openings like "The wind howled" unless it fits the story
+- Do NOT ignore what happened in previous chapters` : `TASK: Write the BEGINNING of Chapter ${chapterNumber} of a ${selectedGenre} novel.`}
+
+REQUIREMENTS:
+- Write AT LEAST 500-800 words
+- ${previousContext ? 'Continue the same story and characters seamlessly' : 'Create an engaging opening with character development'}
+- Be detailed and descriptive
+- Advance the plot meaningfully
+- ${previousContext ? 'Build upon previous chapter events' : 'Establish the setting and characters'}
+
+WORD COUNT REQUIREMENT: Your response must be at least 500 words minimum.
+
+${languageInstruction}
+
+${previousContext ? `BEGIN Chapter ${chapterNumber} (continuing from previous chapter):` : `BEGIN Chapter ${chapterNumber}:`}`;
         } else {
           // Get more context for better continuation
           const contextLength = Math.min(1000, editorContent.length);
@@ -587,6 +637,23 @@ BEGIN CONTINUATION NOW:`;
                 );
 
                 console.log(`✅ Auto-pilot: Successfully saved ${cleanedContent.length} characters, final word count: ${newWordCount}`);
+                
+                // Check if chapter is complete (2000+ words) and auto-create new chapter
+                if (newWordCount >= 2000 && autoPilotMode) {
+                  console.log(`🎯 CHAPTER COMPLETE! ${newWordCount}/2000 words reached. Auto-creating next chapter...`);
+                  
+                  // Stop current autopilot
+                  setAutoPilotMode(false);
+                  if (autoPilotInterval) {
+                    clearInterval(autoPilotInterval);
+                    setAutoPilotInterval(null);
+                  }
+                  
+                  // Create new chapter with delay to ensure state is updated
+                  setTimeout(() => {
+                    addNewChapter(true); // true = auto-created
+                  }, 1000);
+                }
                 
                 return currentContent; // Return the same content since we're just updating other states
               });
@@ -850,7 +917,7 @@ BEGIN CONTINUATION NOW:`;
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900">Chapters</h3>
-              <Button onClick={addNewChapter} size="sm" variant="outline">
+              <Button onClick={() => addNewChapter(false)} size="sm" variant="outline">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
