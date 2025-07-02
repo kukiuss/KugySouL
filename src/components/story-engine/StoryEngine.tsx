@@ -9,13 +9,15 @@ import { StoryPlanning } from './StoryPlanning';
 import { StoryWriting } from './StoryWriting';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Lightbulb, PenTool, Settings } from 'lucide-react';
+import { BookOpen, Lightbulb, PenTool, Settings, BarChart3 } from 'lucide-react';
+import { StoryEngineStats } from './StoryEngineStats';
 
-export default function StoryEngine() {
+function StoryEngine() {
   const [currentProject, setCurrentProject] = useState<StoryProject | null>(null);
   const [projects, setProjects] = useState<StoryProject[]>([]);
   const [showIdeaSelector, setShowIdeaSelector] = useState(false);
   const [showProjectSelector, setShowProjectSelector] = useState(false);
+  const [currentView, setCurrentView] = useState<'brainstorming' | 'planning' | 'writing' | 'stats'>('brainstorming');
 
   // Load projects from localStorage
   useEffect(() => {
@@ -67,6 +69,11 @@ export default function StoryEngine() {
 
   const renderCurrentPhase = () => {
     if (!currentProject) return null;
+
+    // Show stats view if selected
+    if (currentView === 'stats') {
+      return <StoryEngineStats project={currentProject} />;
+    }
 
     switch (currentProject.currentPhase) {
       case 'brainstorming':
@@ -254,34 +261,57 @@ export default function StoryEngine() {
           {/* Phase Navigation */}
           <div className="flex items-center gap-2">
             <Button 
-              variant={currentProject?.currentPhase === 'brainstorming' ? 'default' : 'outline'}
+              variant={currentProject?.currentPhase === 'brainstorming' && currentView !== 'stats' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => currentProject && updateProject({
-                ...currentProject, 
-                currentPhase: 'brainstorming'
-              })}
+              onClick={() => {
+                setCurrentView('brainstorming');
+                if (currentProject) {
+                  updateProject({
+                    ...currentProject, 
+                    currentPhase: 'brainstorming'
+                  });
+                }
+              }}
             >
               Brainstorming
             </Button>
             <Button 
-              variant={currentProject?.currentPhase === 'planning' ? 'default' : 'outline'}
+              variant={currentProject?.currentPhase === 'planning' && currentView !== 'stats' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => currentProject && updateProject({
-                ...currentProject, 
-                currentPhase: 'planning'
-              })}
+              onClick={() => {
+                setCurrentView('planning');
+                if (currentProject) {
+                  updateProject({
+                    ...currentProject, 
+                    currentPhase: 'planning'
+                  });
+                }
+              }}
             >
               Planning
             </Button>
             <Button 
-              variant={currentProject?.currentPhase === 'writing' ? 'default' : 'outline'}
+              variant={currentProject?.currentPhase === 'writing' && currentView !== 'stats' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => currentProject && updateProject({
-                ...currentProject, 
-                currentPhase: 'writing'
-              })}
+              onClick={() => {
+                setCurrentView('writing');
+                if (currentProject) {
+                  updateProject({
+                    ...currentProject, 
+                    currentPhase: 'writing'
+                  });
+                }
+              }}
             >
               Writing
+            </Button>
+            <Button 
+              variant={currentView === 'stats' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setCurrentView('stats')}
+            >
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Stats
             </Button>
           </div>
         </div>
@@ -294,3 +324,6 @@ export default function StoryEngine() {
     </div>
   );
 }
+
+export { StoryEngine };
+export default StoryEngine;

@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Unused
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Edit, Play, Pause, RotateCcw, Sparkles, FileText, Users, Globe } from 'lucide-react';
+import { BookOpen, Play, Pause, Sparkles, Users, Globe } from 'lucide-react';
+// Removed unused: Edit, RotateCcw, FileText
 
 interface StoryWritingProps {
   project: StoryProject;
@@ -205,7 +206,7 @@ Konten akan disesuaikan dengan format yang dipilih (${selectedChapter.format}) d
                     <div>
                       <CardTitle>{selectedChapter.title}</CardTitle>
                       <CardDescription>
-                        {selectedChapter.partTitle} • Format: {selectedChapter.format}
+                        Format: {selectedChapter.format}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">

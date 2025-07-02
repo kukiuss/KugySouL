@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Edit, Trash2, BookOpen, ChevronDown, ChevronRight, FileText, Sparkles } from 'lucide-react';
+// Removed Collapsible import - using conditional rendering instead
+import { Plus, Edit, Trash2, BookOpen, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+// Removed unused: FileText
 
 interface OutlineEditorProps {
   outline: OutlineStructure;
@@ -162,7 +163,7 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
     setExpandedParts(newExpanded);
   };
 
-  const generateChapterIdeas = (chapter: ChapterCard) => {
+  const generateChapterIdeas = () => {
     // Simulate AI generation
     const ideas = [
       'Perkenalan karakter utama dalam situasi normal',
@@ -248,8 +249,7 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
             
             return (
               <Card key={part.id}>
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
+                {/* Using conditional rendering instead of Collapsible */}
                     <CardHeader 
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => togglePartExpansion(part.id)}
@@ -296,13 +296,12 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
                         </div>
                       </div>
                     </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
+                
+                {isExpanded && (
                     <CardContent className="pt-0">
                       {/* Chapters */}
                       <div className="space-y-3">
-                        {part.chapters.map((chapter, chapterIndex) => (
+                        {part.chapters.map((chapter) => (
                           <Card key={chapter.id} className="bg-gray-50">
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
@@ -353,8 +352,7 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
                         </Button>
                       </div>
                     </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
+                )}
               </Card>
             );
           })}
@@ -460,7 +458,7 @@ export function OutlineEditor({ outline, onUpdateOutline }: OutlineEditorProps) 
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => generateChapterIdeas(editingChapter)}
+                    onClick={() => generateChapterIdeas()}
                   >
                     <Sparkles className="h-3 w-3 mr-1" />
                     Generate Ideas
