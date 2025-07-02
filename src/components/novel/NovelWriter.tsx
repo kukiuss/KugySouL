@@ -14,10 +14,12 @@ import {
   Loader2,
   Play,
   Pause,
-  Plus
+  Plus,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { sendChatMessage } from '@/services/api';
+import { StoryEngineIntegration } from '@/components/story-engine/StoryEngineIntegration';
 
 interface NovelChapter {
   id: string;
@@ -71,6 +73,9 @@ export default function NovelWriter() {
   const [chapterWordCount, setChapterWordCount] = useState(0);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  
+  // Story Engine Integration
+  const [showStoryEngine, setShowStoryEngine] = useState(false);
 
   // Load projects from localStorage on mount
   useEffect(() => {
@@ -797,6 +802,25 @@ BEGIN CONTINUATION NOW:`;
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Novel Writer</h1>
             <p className="text-xl text-gray-600 mb-8">Create your masterpiece with AI assistance</p>
             
+            {/* Story Engine CTA */}
+            <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-2">🎭 Try KugySoul Story Engine</h3>
+                  <p className="text-purple-100">
+                    Complete novel creation workflow with AI brainstorming, character cards, worldbuilding & structured outlining
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowStoryEngine(true)}
+                  className="bg-white text-purple-600 hover:bg-gray-100 ml-4"
+                >
+                  <Layers className="h-4 w-4 mr-2" />
+                  Open Story Engine
+                </Button>
+              </div>
+            </div>
+            
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-semibold mb-4">Start New Project</h3>
@@ -867,6 +891,11 @@ BEGIN CONTINUATION NOW:`;
         </div>
       </div>
     );
+  }
+
+  // Show Story Engine if requested
+  if (showStoryEngine) {
+    return <StoryEngineIntegration onClose={() => setShowStoryEngine(false)} />;
   }
 
   return (

@@ -198,7 +198,7 @@ export function WorldbuildingCards({ worldbuilding, onUpdateWorldbuilding }: Wor
                     <div className="flex-1">
                       <CardTitle className="text-lg">{element.elementName || 'Unnamed Element'}</CardTitle>
                       {element.alias && (
-                        <CardDescription>"{element.alias}"</CardDescription>
+                        <CardDescription>&ldquo;{element.alias}&rdquo;</CardDescription>
                       )}
                     </div>
                     <Badge className={typeInfo.color}>

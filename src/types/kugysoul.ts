@@ -21,6 +21,7 @@ export interface StoryProject {
   // Current State
   currentPhase: 'brainstorming' | 'planning' | 'writing';
   hasIdea: boolean;
+  selectedIdea?: string | null;
 }
 
 // Character Card Types
